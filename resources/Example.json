@@ -1,0 +1,11 @@
+{
+    "name": "Example",
+    "prefix": "-[Example]-",
+    "armor": "[]",
+    "items": "[{Count:1b,Name:\"minecraft:grass_block\",Damage:0s,Block:{name:\"minecraft:grass_block\",version:18161159,states:{},PMMPDataVersion:1l},PMMPDataVersion:1l}]",
+    "cooldown": 10,
+    "price": 10,
+    "permission": null,
+    "icon": null,
+    "storeInChest": true
+}
