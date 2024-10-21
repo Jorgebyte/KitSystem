@@ -1,0 +1,22 @@
+name: KitSystem
+api: 5.3.0
+version: 1.0.0
+author: Jorgebyte
+
+main: Jorgebyte\KitSystem\Main
+
+permissions:
+  kitsystem.command:
+    default: true
+  kitsystem.command.create:
+    default: op
+  kitsystem.command.delete:
+    default: op
+  kitsystem.command.give:
+    default: op
+  kitsystem.command.giveall:
+    default: op
+  kitsystem.command.createcategory:
+    default: op
+  kitsystem.command.deletecategory:
+    default: op

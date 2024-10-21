@@ -1,0 +1,4 @@
+economy:
+  provider: bedrockeconomy
+
+chest-kit: "chest"

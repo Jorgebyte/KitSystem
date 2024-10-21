@@ -1,0 +1,10 @@
+parameters:
+    level: max
+    paths:
+        - src
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false
+    treatPhpDocTypesAsCertain: false
+
+includes:
+    - vendor/phpstan/phpstan-strict-rules/rules.neon

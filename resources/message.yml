@@ -1,0 +1,13 @@
+prefix: "§8(§bKitSystem§8)§r "
+kit_claimed: "{prefix}§aYou have claimed the kit:§e {kitname}"
+open_kit: "{prefix}§aYou have opened your kit"
+cooldown_active: "{prefix}§cYou have a waiting time of: {time}"
+full_inv: "{prefix}§cyou don't have enough space"
+full_inv_chest: "Your inventory was full, so the kit chest was dropped at your location"
+
+failed_money: "{prefix}§cFailed to deduct money"
+lack_of_money: "{prefix}§cYou do not have enough money to claim this kit. Price: {kitprice}"
+
+giveall_kit_broadcast: "{prefix}§aThe§e {player}§a has given§e {quantity}§a of Kits:§e {kit}"
+
+without_permissions: "{prefix}§cYou do not have sufficient permissions"
