@@ -2,3 +2,6 @@ economy:
   provider: bedrockeconomy
 
 chest-kit: "chest"
+
+enable-starterkit: false
+starterkit: "StarterKit"

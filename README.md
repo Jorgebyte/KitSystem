@@ -8,6 +8,7 @@ This plugin makes it easy for you to manage kits as it has a form system for eas
 - Separation of kits by categories
 - Improved kit and category editing system
 - JSON Kit Storage
+- Starter Kit
 - Supports multiple economies
 - Custom messages
 - PHPStan level max compliance for improved code quality and robustness

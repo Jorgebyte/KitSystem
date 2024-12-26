@@ -1,5 +1,6 @@
 prefix: "§8(§bKitSystem§8)§r "
 kit_claimed: "{prefix}§aYou have claimed the kit:§e {kitname}"
+starterkit_received: "{prefix}§aYou have received the starter kit: {kit}."
 open_kit: "{prefix}§aYou have opened your kit"
 cooldown_active: "{prefix}§cYou have a waiting time of: {time}"
 full_inv: "{prefix}§cyou don't have enough space"

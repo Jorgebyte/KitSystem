@@ -5,7 +5,7 @@
     "license": "Apache-2.0",
     "autoload": {
         "psr-4": {
-            "": "src/"
+            "": "src/Jorgebyte"
         }
     },
     "require": {
@@ -20,7 +20,8 @@
         "friendsofphp/php-cs-fixer": "^v3.12.0",
         "phpstan/phpstan": "^1.2.0",
         "pocketmine/pocketmine-mp": "^5.3.0",
-        "phpstan/phpstan-strict-rules": "^1.1.0"
+        "phpstan/phpstan-strict-rules": "^1.1.0",
+        "pocketmine/codestyle": "dev-stable"
     },
     "repositories": [
         {
@@ -42,6 +43,10 @@
         {
             "type": "vcs",
             "url": "https://github.com/Muqsit/InvMenu.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/pmmp/CodeStyle.git"
         }
     ]
 }

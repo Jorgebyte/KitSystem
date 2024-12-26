@@ -1,39 +1,39 @@
 <?php
 
-declare(strict_types=1);
-
 /*
- *    KitSystem
- *    Api: 5.3.0
- *    Version: 1.0.0
- *    Author: Jorgebyte
+ *   -- KitSystem --
+ *
+ *   Author: Jorgebyte
+ *   Discord Contact: jorgess__
+ *
+ *  https://github.com/Jorgebyte/KitSystem
  */
+
+declare(strict_types=1);
 
 namespace Jorgebyte\KitSystem\util;
 
 use Jorgebyte\KitSystem\kit\Kit;
 use pocketmine\player\Player;
 
-class PlayerUtil
-{
-    public static function hasEnoughSpace(Player $player, Kit $kit): bool
-    {
-        $inventory = $player->getInventory();
-        $armorInventory = $player->getArmorInventory();
+class PlayerUtil{
+	public static function hasEnoughSpace(Player $player, Kit $kit) : bool{
+		$inventory = $player->getInventory();
+		$armorInventory = $player->getArmorInventory();
 
-        $items = $kit->getItems();
-        foreach ($items as $item) {
-            if (!$inventory->canAddItem($item)) {
-                return false;
-            }
-        }
+		$items = $kit->getItems();
+		foreach($items as $item){
+			if(!$inventory->canAddItem($item)){
+				return false;
+			}
+		}
 
-        $armor = $kit->getArmor();
-        foreach ($armor as $i => $armorPiece) {
-            if (!$armorInventory->getItem($i)->isNull()) {
-                return false;
-            }
-        }
-        return true;
-    }
+		$armor = $kit->getArmor();
+		foreach($armor as $i => $armorPiece){
+			if(!$armorInventory->getItem($i)->isNull()){
+				return false;
+			}
+		}
+		return true;
+	}
 }
