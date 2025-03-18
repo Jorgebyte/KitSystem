@@ -39,7 +39,7 @@ use function is_array;
 final class Main extends PluginBase{
     use SingletonTrait;
 
-    private const string DEFAULT_LANGUAGE = "en_US";
+    private const DEFAULT_LANGUAGE = "en_US";
 
     private DataConnector $database;
     private KitManager $kitManager;
