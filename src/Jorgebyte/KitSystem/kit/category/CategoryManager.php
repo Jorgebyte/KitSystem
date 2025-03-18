@@ -1,51 +1,34 @@
 <?php
 
 /*
- *   -- KitSystem --
+ *    -- KitSystem --
  *
- *   Author: Jorgebyte
- *   Discord Contact: jorgess__
+ *    Author: Jorgebyte
+ *    Discord Contact: jorgess__
  *
- *  https://github.com/Jorgebyte/KitSystem
+ *   https://github.com/Jorgebyte/KitSystem
  */
 
 declare(strict_types=1);
 
 namespace Jorgebyte\KitSystem\kit\category;
 
-use Exception;
 use Jorgebyte\KitSystem\kit\Kit;
 use Jorgebyte\KitSystem\Main;
-use pocketmine\Server;
-use function array_map;
+use RuntimeException;
 use function array_values;
-use function count;
-use function file_exists;
-use function file_get_contents;
-use function file_put_contents;
-use function glob;
-use function is_array;
-use function is_dir;
-use function is_string;
-use function json_decode;
-use function json_encode;
-use function mkdir;
-use function unlink;
-use const DIRECTORY_SEPARATOR;
-use const JSON_PRETTY_PRINT;
 
-class CategoryManager{
+final class CategoryManager{
+	/** @var array<string, Category> */
 	private array $categories = [];
-	private string $directory;
 
-	public function __construct(string $directory){
-		$this->directory = $directory;
+	public function __construct(){
 		$this->loadCategories();
 	}
 
 	public function addCategory(Category $category) : void{
 		$this->categories[$category->getName()] = $category;
-		$this->saveCategory($category);
+		$this->persistCategory($category);
 	}
 
 	public function categoryExists(string $name) : bool{
@@ -53,28 +36,32 @@ class CategoryManager{
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws RuntimeException If category already exists
 	 */
 	public function createCategory(string $name, string $prefix, ?string $permission = null, ?string $icon = null) : void{
 		if($this->categoryExists($name)){
-			throw new Exception("A Category with this name already exists!");
+			throw new RuntimeException("Category '$name' already exists");
 		}
+
 		$category = new Category($name, $prefix, $permission, $icon);
 		$this->addCategory($category);
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws RuntimeException If category doesn't exist
 	 */
 	public function addKitToCategory(Kit $kit, string $categoryName) : void{
-		$category = $this->getCategory($categoryName);
-
-		if($category === null){
-			throw new Exception("The specified category does not exist!");
-		}
-
+		$category = $this->getCategory($categoryName) ?? throw new RuntimeException("Category '$categoryName' not found");
 		$category->addKit($kit);
-		$this->saveCategory($category);
+		$this->persistCategory($category);
+
+		Main::getInstance()->getDatabase()->executeChange(
+			'category_kits.insert',
+			[
+				'category_name' => $category->getName(),
+				'kit_name' => $kit->getName()
+			]
+		);
 	}
 
 	public function getCategory(string $name) : ?Category{
@@ -90,23 +77,30 @@ class CategoryManager{
 		return $category->getKits();
 	}
 
+	/** @return array<Category> */
 	public function getAllCategories() : array{
 		return array_values($this->categories);
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws RuntimeException If category doesn't exist
 	 */
 	public function deleteCategory(string $name) : void{
 		if(!isset($this->categories[$name])){
-			throw new Exception("ERROR: The category does not exist");
-		}
-		$file = $this->directory . DIRECTORY_SEPARATOR . 'categories' . DIRECTORY_SEPARATOR . $name . '.json';
-		if(file_exists($file)){
-			unlink($file);
+			throw new RuntimeException("Category '$name' not found");
 		}
 
 		unset($this->categories[$name]);
+		Main::getInstance()->getDatabase()->executeChange('categories.delete', ['name' => $name]);
+	}
+
+	public function persistCategory(Category $category) : void{
+		Main::getInstance()->getDatabase()->executeChange('categories.insert', [
+			'name' => $category->getName(),
+			'prefix' => $category->getPrefix(),
+			'permission' => $category->getPermission(),
+			'icon' => $category->getIcon()
+		]);
 	}
 
 	public function saveCategory(Category $category) : void{
@@ -114,62 +108,44 @@ class CategoryManager{
 			'name' => $category->getName(),
 			'prefix' => $category->getPrefix(),
 			'permission' => $category->getPermission(),
-			'icon' => $category->getIcon(),
-			'kits' => array_map(fn ($kit) => $kit->getName(), $category->getKits()),
+			'icon' => $category->getIcon()
 		];
-
-		file_put_contents($this->directory . DIRECTORY_SEPARATOR . 'categories' . DIRECTORY_SEPARATOR . $category->getName() . '.json', json_encode($data, JSON_PRETTY_PRINT));
+		Main::getInstance()->getDatabase()->executeChange('categories.insert', $data);
+		foreach($category->getKits() as $kit){
+			Main::getInstance()->getDatabase()->executeChange('category_kits.insert', [
+				'category_name' => $category->getName(),
+				'kit_name' => $kit->getName()
+			]);
+		}
 	}
 
 	private function loadCategories() : void{
-		$categoryDirectory = $this->directory . DIRECTORY_SEPARATOR . 'categories';
-
-		if(!is_dir($categoryDirectory)){
-			mkdir($categoryDirectory, 0755, true);
-		}
-
-		$files = glob($categoryDirectory . DIRECTORY_SEPARATOR . '*.json');
-		$this->categories = [];
-
-		if(is_array($files) && count($files) > 0){
-			foreach($files as $file){
-				$json = file_get_contents($file);
-				if($json === false){
-					Server::getInstance()->getLogger()->warning("ERROR: Failed to read file: " . $file);
-					continue;
-				}
-
-				$data = json_decode($json, true);
-				if(!is_array($data)){
-					Server::getInstance()->getLogger()->warning("ERROR: Invalid JSON format in file:" . $file);
-					continue;
-				}
-
-				if(!isset($data['name'], $data['prefix']) || !is_string($data['name']) || !is_string($data['prefix'])){
-					Server::getInstance()->getLogger()->warning("ERROR: Missing or invalid 'name' or 'prefix' in file:" . $file);
-					continue;
-				}
-
-				$permission = isset($data['permission']) && is_string($data['permission']) ? $data['permission'] : null;
-				$icon = isset($data['icon']) && is_string($data['icon']) ? $data['icon'] : null;
-				$category = new Category($data['name'], $data['prefix'], $permission, $icon);
-
-				if(isset($data['kits']) && is_array($data['kits'])){
-					foreach($data['kits'] as $kitName){
-						if(!is_string($kitName)){
-							continue;
+		Main::getInstance()->getDatabase()->executeSelect('categories.get_all', [], function(array $rows) : void{
+			$categoryMap = [];
+			foreach($rows as $row){
+				$category = new Category(
+					$row['name'],
+					$row['prefix'],
+					$row['permission'] ?? null,
+					$row['icon'] ?? null
+				);
+				$categoryMap[$category->getName()] = $category;
+			}
+			Main::getInstance()->getDatabase()->executeSelect('category_kits.get_all', [], function(array $kitRows) use (&$categoryMap) : void{
+				$kitManager = Main::getInstance()->getKitManager();
+				foreach($kitRows as $row){
+					$catName = $row['category_name'];
+					$kitName = $row['kit_name'];
+					if(isset($categoryMap[$catName])){
+						$kit = $kitManager->getKit($kitName);
+						if($kit !== null){
+							$categoryMap[$catName]->addKit($kit);
 						}
-						$kit = Main::getInstance()->getKitManager()->getKit($kitName);
-						if($kit === null){
-							Server::getInstance()->getLogger()->warning("ERROR: Kit " . $kitName . " not found for category " . $data['name'] . " in file: " . $file);
-							continue;
-						}
-
-						$category->addKit($kit);
 					}
 				}
-				$this->categories[$category->getName()] = $category;
-			}
-		}
+			});
+
+			$this->categories = $categoryMap;
+		});
 	}
 }

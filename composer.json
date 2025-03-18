@@ -13,7 +13,9 @@
         "dresnite/easyui": "dev-pm5",
         "presentkim/item-serialize-utils": "dev-main",
         "dapigguy/libpiggyeconomy": "dev-master",
-        "muqsit/invmenu": "dev-pm5"
+        "muqsit/invmenu": "dev-pm5",
+        "poggit/libasynql": "dev-master",
+        "ivancraft623/languages": "dev-main"
     },
 
     "require-dev": {
@@ -43,6 +45,14 @@
         {
             "type": "vcs",
             "url": "https://github.com/Muqsit/InvMenu.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/poggit/libasynql.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/IvanCraft623/languages.git"
         },
         {
             "type": "vcs",

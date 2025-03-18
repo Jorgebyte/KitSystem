@@ -1,12 +1,12 @@
 <?php
 
 /*
- *   -- KitSystem --
+ *    -- KitSystem --
  *
- *   Author: Jorgebyte
- *   Discord Contact: jorgess__
+ *    Author: Jorgebyte
+ *    Discord Contact: jorgess__
  *
- *  https://github.com/Jorgebyte/KitSystem
+ *   https://github.com/Jorgebyte/KitSystem
  */
 
 declare(strict_types=1);
@@ -16,38 +16,19 @@ namespace Jorgebyte\KitSystem\kit;
 use pocketmine\permission\DefaultPermissions;
 use pocketmine\player\Player;
 
-class Kit{
-	private string $name;
-	private string $prefix;
-	private array $armor;
-	private array $items;
-	private ?int $cooldown;
-	private ?float $price;
-	private ?string $permission;
-	private ?string $icon;
-	private bool $storeInChest;
+final class Kit{
 
 	public function __construct(
-		string $name,
-		string $prefix,
-		array $armor,
-		array $items,
-		?int $cooldown = null,
-		?float $price = null,
-		?string $permission = null,
-		?string $icon = null,
-		bool $storeInChest = true,
-	){
-		$this->name = $name;
-		$this->prefix = $prefix;
-		$this->armor = $armor;
-		$this->items = $items;
-		$this->cooldown = $cooldown;
-		$this->price = $price;
-		$this->permission = $permission;
-		$this->icon = $icon;
-		$this->storeInChest = $storeInChest;
-	}
+		private string $name,
+		private string $prefix,
+		private array $armor,
+		private array $items,
+		private ?int $cooldown = null,
+		private ?float $price = null,
+		private ?string $permission = null,
+		private ?string $icon = null,
+		private bool $storeInChest = true
+	){}
 
 	public function getName() : string{
 		return $this->name;
@@ -81,6 +62,10 @@ class Kit{
 		return $this->icon;
 	}
 
+	public function shouldStoreInChest() : bool{
+		return $this->storeInChest;
+	}
+
 	public function setName(string $name) : void{
 		$this->name = $name;
 	}
@@ -89,12 +74,12 @@ class Kit{
 		$this->prefix = $prefix;
 	}
 
-	public function setItems(array $items) : void{
-		$this->items = $items;
-	}
-
 	public function setArmor(array $armor) : void{
 		$this->armor = $armor;
+	}
+
+	public function setItems(array $items) : void{
+		$this->items = $items;
 	}
 
 	public function setCooldown(?int $cooldown) : void{
@@ -111,10 +96,6 @@ class Kit{
 
 	public function setIcon(?string $icon) : void{
 		$this->icon = $icon;
-	}
-
-	public function shouldStoreInChest() : bool{
-		return $this->storeInChest;
 	}
 
 	public function setStoreInChest(bool $storeInChest) : void{

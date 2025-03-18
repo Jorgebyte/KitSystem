@@ -1,43 +1,41 @@
 <?php
 
 /*
- *   -- KitSystem --
+ *    -- KitSystem --
  *
- *   Author: Jorgebyte
- *   Discord Contact: jorgess__
+ *    Author: Jorgebyte
+ *    Discord Contact: jorgess__
  *
- *  https://github.com/Jorgebyte/KitSystem
+ *   https://github.com/Jorgebyte/KitSystem
  */
 
 declare(strict_types=1);
 
 namespace Jorgebyte\KitSystem\cooldown;
 
-use Jorgebyte\KitSystem\cooldown\async\LoadCooldownsTask;
-use Jorgebyte\KitSystem\cooldown\async\RemoveCooldownTask;
-use Jorgebyte\KitSystem\cooldown\async\SaveCooldownTask;
+use Jorgebyte\KitSystem\Main;
 use pocketmine\player\Player;
-use pocketmine\Server;
-use function file_exists;
 use function time;
-use const SQLITE3_INTEGER;
 
-class CooldownManager{
+final class CooldownManager{
+
+	/** @var array<string, array<string, int>> */
 	private array $cooldowns = [];
-	private string $dataPath;
 
-	public function __construct(string $dataPath){
-		$this->dataPath = $dataPath . "cooldowns.db";
+	public function __construct(){
 		$this->loadCooldowns();
 	}
 
 	public function setCooldown(Player $player, string $kitName, int $cooldownSeconds) : void{
 		$uuid = $player->getUniqueId()->toString();
 		$expiryTime = time() + $cooldownSeconds;
-
 		if($cooldownSeconds > 0){
 			$this->cooldowns[$uuid][$kitName] = $expiryTime;
-			$this->saveCooldownAsync($uuid, $kitName, $expiryTime);
+			Main::getInstance()->getDatabase()->executeChange("cooldowns.set", [
+				"uuid" => $uuid,
+				"kit" => $kitName,
+				"cooldown" => $expiryTime
+			]);
 		}
 	}
 
@@ -56,55 +54,19 @@ class CooldownManager{
 	private function clearCooldown(Player $player, string $kitName) : void{
 		$uuid = $player->getUniqueId()->toString();
 		unset($this->cooldowns[$uuid][$kitName]);
-		Server::getInstance()->getAsyncPool()->submitTask(new RemoveCooldownTask($this->dataPath, $uuid, $kitName));
-	}
-
-	public function saveAllCooldowns() : void{
-		$db = new \SQLite3($this->dataPath);
-		$db->exec("CREATE TABLE IF NOT EXISTS cooldowns (uuid TEXT, kit TEXT, expiry INTEGER, PRIMARY KEY (uuid, kit))");
-
-		foreach($this->cooldowns as $uuid => $kits){
-			foreach($kits as $kitName => $expiryTime){
-				if($expiryTime > time()){
-					$stmt = $db->prepare("INSERT OR REPLACE INTO cooldowns (uuid, kit, expiry) VALUES (:uuid, :kit, :expiry)");
-					if($stmt === false){
-						Server::getInstance()->getLogger()->info("ERROR: Failed to prepare SQLite statement for saving cooldowns");
-						continue;
-					}
-					$stmt->bindValue(":uuid", $uuid);
-					$stmt->bindValue(":kit", $kitName);
-					$stmt->bindValue(":expiry", $expiryTime, SQLITE3_INTEGER);
-					$result = $stmt->execute();
-					if($result === false){
-						Server::getInstance()->getLogger()->info("ERROR: Failed to execute SQLite statement for UUID: " . $uuid . "Kit: " . $kitName);
-					}
-					$stmt->close();
-				}
-			}
-		}
-		$db->close();
-	}
-
-	public function addCooldownDirectly(string $uuid, string $kitName, int $expiryTime) : void{
-		if($expiryTime > time()){
-			$this->cooldowns[$uuid][$kitName] = $expiryTime;
-		}
+		Main::getInstance()->getDatabase()->executeChange("cooldowns.remove", [
+			"uuid" => $uuid,
+			"kit" => $kitName
+		]);
 	}
 
 	private function loadCooldowns() : void{
-		$dbFilePath = $this->dataPath;
-		if(!file_exists($dbFilePath)){
-			$db = new \SQLite3($dbFilePath);
-			$db->exec("CREATE TABLE IF NOT EXISTS cooldowns (uuid TEXT, kit TEXT, expiry INTEGER)");
-			$db->close();
-		}
-
-		Server::getInstance()->getAsyncPool()->submitTask(new LoadCooldownsTask($dbFilePath));
-	}
-
-	private function saveCooldownAsync(string $uuid, string $kitName, int $expiryTime) : void{
-		if($expiryTime > time()){
-			Server::getInstance()->getAsyncPool()->submitTask(new SaveCooldownTask($this->dataPath, $uuid, $kitName, $expiryTime));
-		}
+		Main::getInstance()->getDatabase()->executeSelect("cooldowns.get_all", [], function(array $rows) : void{
+			foreach($rows as $row){
+				if((int) $row["cooldown"] > time()){
+					$this->cooldowns[$row["uuid"]][$row["kit"]] = (int) $row["cooldown"];
+				}
+			}
+		});
 	}
 }

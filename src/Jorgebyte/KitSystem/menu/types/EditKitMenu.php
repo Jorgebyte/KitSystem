@@ -1,12 +1,12 @@
 <?php
 
 /*
- *   -- KitSystem --
+ *    -- KitSystem --
  *
- *   Author: Jorgebyte
- *   Discord Contact: jorgess__
+ *    Author: Jorgebyte
+ *    Discord Contact: jorgess__
  *
- *  https://github.com/Jorgebyte/KitSystem
+ *   https://github.com/Jorgebyte/KitSystem
  */
 
 declare(strict_types=1);
@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Jorgebyte\KitSystem\menu\types;
 
 use Jorgebyte\KitSystem\Main;
+use Jorgebyte\KitSystem\util\LangKey;
 use Jorgebyte\KitSystem\util\Sound;
 use Jorgebyte\KitSystem\util\SoundNames;
 use muqsit\invmenu\InvMenu;
@@ -96,11 +97,12 @@ class EditKitMenu extends InvMenu{
 					}
 				}
 				$kit = Main::getInstance()->getKitManager()->getKit($this->kitName);
+				$translator = Main::getInstance()->getTranslator();
 				if($kit !== null){
 					$kit->setItems($newItems);
 					$kit->setArmor($newArmor);
 					Main::getInstance()->getKitManager()->saveKit($kit);
-					$player->sendMessage(TextFormat::GREEN . "Kit updated successfully!!!");
+					$player->sendMessage($translator->translate($player, LangKey::KIT_UPDATE->value));
 					Sound::addSound($player, SoundNames::GOOD_TONE->value);
 					$this->onClose($player);
 				}

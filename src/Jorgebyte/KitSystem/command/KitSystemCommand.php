@@ -1,12 +1,12 @@
 <?php
 
 /*
- *   -- KitSystem --
+ *    -- KitSystem --
  *
- *   Author: Jorgebyte
- *   Discord Contact: jorgess__
+ *    Author: Jorgebyte
+ *    Discord Contact: jorgess__
  *
- *  https://github.com/Jorgebyte/KitSystem
+ *   https://github.com/Jorgebyte/KitSystem
  */
 
 declare(strict_types=1);

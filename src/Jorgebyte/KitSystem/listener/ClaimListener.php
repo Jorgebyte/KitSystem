@@ -1,12 +1,12 @@
 <?php
 
 /*
- *   -- KitSystem --
+ *    -- KitSystem --
  *
- *   Author: Jorgebyte
- *   Discord Contact: jorgess__
+ *    Author: Jorgebyte
+ *    Discord Contact: jorgess__
  *
- *  https://github.com/Jorgebyte/KitSystem
+ *   https://github.com/Jorgebyte/KitSystem
  */
 
 declare(strict_types=1);
@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace Jorgebyte\KitSystem\listener;
 
 use Jorgebyte\KitSystem\Main;
-use Jorgebyte\KitSystem\message\MessageKey;
+use Jorgebyte\KitSystem\util\LangKey;
 use Jorgebyte\KitSystem\util\PlayerUtil;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerInteractEvent;
@@ -22,25 +22,29 @@ use pocketmine\event\player\PlayerInteractEvent;
 class ClaimListener implements Listener{
 	public function onPlayerInteract(PlayerInteractEvent $event) : void{
 		$player = $event->getPlayer();
-		$message = Main::getInstance()->getMessage();
+		$translator = Main::getInstance()->getTranslator();
 		$item = $player->getInventory()->getItemInHand();
 
-		if($item->getNamedTag()->getTag("kitName") !== null){
-			$kitName = $item->getNamedTag()->getString("kitName");
-
-			$kitManager = Main::getInstance()->getKitManager();
-			$kit = $kitManager->getKit($kitName);
-
-			if($kit !== null){
-				$event->cancel();
-				if(!PlayerUtil::hasEnoughSpace($player, $kit)){
-					$player->sendMessage($message->getMessage(MessageKey::FULL_INV));
-					return;
-				}
-				$kitManager->giveKitItems($player, $kit);
-				$player->getInventory()->removeItem($item->setCount(1));
-				$player->sendMessage($message->getMessage(MessageKey::OPEN_KIT, ["kitname" => $kitName]));
-			}
+		$kitName = $item->getNamedTag()->getString("kitName", "");
+		if($kitName === ""){
+			return;
 		}
+
+		$kitManager = Main::getInstance()->getKitManager();
+		$kit = $kitManager->getKit($kitName);
+		if($kit === null){
+			return;
+		}
+
+		$event->cancel();
+		if(!PlayerUtil::hasEnoughSpace($player, $kit)){
+			$player->sendMessage($translator->translate($player, LangKey::FULL_INV->value));
+			return;
+		}
+
+		$kitManager->giveKitItems($player, $kit);
+		$player->getInventory()->removeItem($item->setCount(1));
+		$player->sendMessage($translator->translate($player, LangKey::OPEN_KIT->value,
+			["{%kitname}" => $kitName]));
 	}
 }

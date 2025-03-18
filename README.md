@@ -4,10 +4,11 @@ This plugin makes it easy for you to manage kits as it has a form system for eas
 
 # Features
 - Easy to understand forms
-- SQLite3 Database
+- SQLite3 Provider Support
+- MySQL Provider Support
 - Separation of kits by categories
 - Improved kit and category editing system
-- JSON Kit Storage
+- Multi-Language support
 - Starter Kit
 - Supports multiple economies
 - Custom messages
@@ -32,6 +33,8 @@ This plugin makes it easy for you to manage kits as it has a form system for eas
 ## Items: [item-serialize-utils](https://github.com/presentkim-pm/item-serialize-utils.git)
 ## Economy: [libPiggyEconomy](https://github.com/DaPigGuy/libPiggyEconomy.git)
 ## InvMenu: [InvMenu](https://github.com/Muqsit/InvMenu.git)
+## libasynql: [libasynql](https://github.com/poggit/libasynql.git)
+## Languages: [Languages](https://github.com/IvanCraft623/languages.git)
 
 # Review:
 

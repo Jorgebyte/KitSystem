@@ -1,12 +1,12 @@
 <?php
 
 /*
- *   -- KitSystem --
+ *    -- KitSystem --
  *
- *   Author: Jorgebyte
- *   Discord Contact: jorgess__
+ *    Author: Jorgebyte
+ *    Discord Contact: jorgess__
  *
- *  https://github.com/Jorgebyte/KitSystem
+ *   https://github.com/Jorgebyte/KitSystem
  */
 
 declare(strict_types=1);
@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace Jorgebyte\KitSystem\listener;
 
 use Jorgebyte\KitSystem\Main;
-use Jorgebyte\KitSystem\message\MessageKey;
+use Jorgebyte\KitSystem\util\LangKey;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\Server;
@@ -26,6 +26,7 @@ class JoinListener implements Listener{
 	public function onPlayerJoin(PlayerJoinEvent $event) : void{
 		$player = $event->getPlayer();
 		$playerName = $player->getName();
+		$translator = Main::getInstance()->getTranslator();
 
 		$dataFolder = Server::getInstance()->getDataPath() . "players/";
 		$playerFile = $dataFolder . $playerName . ".dat";
@@ -54,9 +55,7 @@ class JoinListener implements Listener{
 		}
 
 		$kitManager->giveKitChest($player, $starterKit);
-		$player->sendMessage(Main::getInstance()->getMessage()->getMessage(
-			MessageKey::STARTERKIT_RECEIVED,
-			["{kit}" => $starterKit->getName()]
-		));
+		$player->sendMessage($translator->translate($player, LangKey::STARTERKIT_RECEIVED->value,
+		["{%kit}" => $starterKit->getPrefix()]));
 	}
 }

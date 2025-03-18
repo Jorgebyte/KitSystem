@@ -1,12 +1,12 @@
 <?php
 
 /*
- *   -- KitSystem --
+ *    -- KitSystem --
  *
- *   Author: Jorgebyte
- *   Discord Contact: jorgess__
+ *    Author: Jorgebyte
+ *    Discord Contact: jorgess__
  *
- *  https://github.com/Jorgebyte/KitSystem
+ *   https://github.com/Jorgebyte/KitSystem
  */
 
 declare(strict_types=1);
@@ -19,7 +19,7 @@ use EasyUI\variant\SimpleForm;
 use Jorgebyte\KitSystem\form\FormManager;
 use Jorgebyte\KitSystem\form\FormTypes;
 use Jorgebyte\KitSystem\Main;
-use Jorgebyte\KitSystem\message\MessageKey;
+use Jorgebyte\KitSystem\util\LangKey;
 use Jorgebyte\KitSystem\util\PlayerUtil;
 use Jorgebyte\KitSystem\util\TimeUtil;
 use pocketmine\player\Player;
@@ -36,7 +36,7 @@ class KitsForm extends SimpleForm{
 
 	protected function onCreation() : void{
 		$economyProvider = Main::getInstance()->getEconomyProvider();
-		$message = Main::getInstance()->getMessage();
+		$translator = Main::getInstance()->getTranslator();
 		$kits = Main::getInstance()->getKitManager()->getAllKits();
 		$categories = Main::getInstance()->getCategoryManager()->getAllCategories();
 
@@ -51,9 +51,10 @@ class KitsForm extends SimpleForm{
 				$button->setIcon(new ButtonIcon($icon));
 			}
 
-			$button->setSubmitListener(function () use ($category, $message){
+			$button->setSubmitListener(function () use ($category, $translator){
 				if(!$category->canUseCategory($this->player)){
-					$this->player->sendMessage($message->getMessage(MessageKey::WITHOUT_PERMISSIONS, ["category" => $category->getName()]));
+					$this->player->sendMessage($translator->translate($this->player, LangKey::WITHOUT_PERMISSIONS->value,
+						["{%category}" => $category->getName()]));
 					return;
 				}
 
@@ -94,25 +95,27 @@ class KitsForm extends SimpleForm{
 				$button->setIcon(new ButtonIcon($icon));
 			}
 
-			$button->setSubmitListener(function () use ($message, $kit, $kitName, $kitPrice, $economyProvider){
+			$button->setSubmitListener(function () use ($translator, $kit, $kitName, $kitPrice, $economyProvider){
 				$currentCooldown = Main::getInstance()->getCooldownManager()->getCooldown($this->player, $kitName);
 				if($currentCooldown !== null){
 					$formattedCooldown = TimeUtil::formatCooldown($currentCooldown);
-					$this->player->sendMessage($message->getMessage(MessageKey::COOLDOWN_ACTIVE, ["time" => $formattedCooldown]));
+					$this->player->sendMessage($translator->translate($this->player, LangKey::COOLDOWN_ACTIVE->value,
+						["{%time}" => $formattedCooldown]));
 					return;
 				}
 				if(!$kit->shouldStoreInChest() && !PlayerUtil::hasEnoughSpace($this->player, $kit)){
-					$this->player->sendMessage($message->getMessage(MessageKey::FULL_INV));
+					$this->player->sendMessage($translator->translate($this->player, LangKey::FULL_INV->value));
 					return;
 				}
-				$processKit = function () use ($message, $kit, $kitName) : void{
+				$processKit = function () use ($translator, $kit, $kitName) : void{
 					if($kit->shouldStoreInChest()){
 						Main::getInstance()->getKitManager()->giveKitChest($this->player, $kit);
 					} else{
 						Main::getInstance()->getKitManager()->giveKitItems($this->player, $kit);
 					}
 
-					$this->player->sendMessage($message->getMessage(MessageKey::KIT_CLAIMED, ["kitname" => $kitName]));
+					$this->player->sendMessage($translator->translate($this->player, LangKey::KIT_CLAIMED->value,
+						["{%kitname}" => $kitName]));
 
 					$cooldownDuration = $kit->getCooldown();
 					if($cooldownDuration > 0){
@@ -120,15 +123,16 @@ class KitsForm extends SimpleForm{
 					}
 				};
 				if($kitPrice > 0){
-					$economyProvider->getMoney($this->player, function ($balance) use ($economyProvider, $kitPrice, $processKit, $message){
+					$economyProvider->getMoney($this->player, function ($balance) use ($economyProvider, $kitPrice, $processKit, $translator){
 						if($balance < $kitPrice){
-							$this->player->sendMessage($message->getMessage(MessageKey::LACK_OF_MONEY, ["kitprice" => strval($kitPrice)]));
+							$this->player->sendMessage($translator->translate($this->player, LangKey::LACK_OF_MONEY->value,
+								["{%kitprice}" => strval($kitPrice)]));
 							return;
 						}
 
-						$economyProvider->takeMoney($this->player, $kitPrice, function (bool $success) use ($processKit, $message){
+						$economyProvider->takeMoney($this->player, $kitPrice, function (bool $success) use ($processKit, $translator){
 							if(!$success){
-								$this->player->sendMessage($message->getMessage(MessageKey::FAILED_MONEY));
+								$this->player->sendMessage($translator->translate($this->player, LangKey::FAILED_MONEY->value));
 								return;
 							}
 							$processKit();

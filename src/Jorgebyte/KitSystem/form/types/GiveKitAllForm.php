@@ -1,12 +1,12 @@
 <?php
 
 /*
- *   -- KitSystem --
+ *    -- KitSystem --
  *
- *   Author: Jorgebyte
- *   Discord Contact: jorgess__
+ *    Author: Jorgebyte
+ *    Discord Contact: jorgess__
  *
- *  https://github.com/Jorgebyte/KitSystem
+ *   https://github.com/Jorgebyte/KitSystem
  */
 
 declare(strict_types=1);
@@ -19,12 +19,11 @@ use EasyUI\element\Slider;
 use EasyUI\utils\FormResponse;
 use EasyUI\variant\CustomForm;
 use Jorgebyte\KitSystem\Main;
-use Jorgebyte\KitSystem\message\MessageKey;
+use Jorgebyte\KitSystem\util\LangKey;
 use Jorgebyte\KitSystem\util\PlayerUtil;
 use pocketmine\player\Player;
 use pocketmine\Server;
 use pocketmine\utils\TextFormat;
-use function strval;
 
 class GiveKitAllForm extends CustomForm{
 	public function __construct(){
@@ -71,15 +70,17 @@ class GiveKitAllForm extends CustomForm{
 				}
 			}
 		}
-		Server::getInstance()->broadcastMessage(Main::getInstance()->getMessage()->getMessage(
-			MessageKey::GIVEALL_KIT_BROADCAST,
+		$translator = Main::getInstance()->getTranslator();
+		$globalMessage = $translator->translate(
+			null,
+			LangKey::GIVEALL_KIT_BROADCAST->value,
 			[
-				"player" => $player->getName(),
-				"quantity" => strval($quantity),
-				"kit" => $kit->getName()
+				'{%player}' => $player->getName(),
+				'{%quantity}' => (string) $quantity,
+				'{%kit}' => $kit->getName()
 			]
-		));
-
+		);
+		Server::getInstance()->broadcastMessage($globalMessage);
 		$player->sendMessage(TextFormat::GREEN . "Successfully gave " . $quantity . " kit(s) to all online players!");
 	}
 }

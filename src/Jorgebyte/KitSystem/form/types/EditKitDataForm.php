@@ -1,12 +1,12 @@
 <?php
 
 /*
- *   -- KitSystem --
+ *    -- KitSystem --
  *
- *   Author: Jorgebyte
- *   Discord Contact: jorgess__
+ *    Author: Jorgebyte
+ *    Discord Contact: jorgess__
  *
- *  https://github.com/Jorgebyte/KitSystem
+ *   https://github.com/Jorgebyte/KitSystem
  */
 
 declare(strict_types=1);
@@ -18,6 +18,7 @@ use EasyUI\element\Toggle;
 use EasyUI\utils\FormResponse;
 use EasyUI\variant\CustomForm;
 use Jorgebyte\KitSystem\Main;
+use Jorgebyte\KitSystem\util\LangKey;
 use Jorgebyte\KitSystem\util\Sound;
 use Jorgebyte\KitSystem\util\SoundNames;
 use pocketmine\player\Player;
@@ -47,6 +48,7 @@ class EditKitDataForm extends CustomForm{
 	}
 
 	protected function onSubmit(Player $player, FormResponse $response) : void{
+		$translator = Main::getInstance()->getTranslator();
 		$kit = Main::getInstance()->getKitManager()->getKit($this->kitName);
 		if($kit === null){
 			return;
@@ -79,7 +81,7 @@ class EditKitDataForm extends CustomForm{
 		$kit->setIcon($icon);
 		$kit->setStoreInChest($storeInChest);
 		Main::getInstance()->getKitManager()->saveKit($kit);
-		$player->sendMessage(TextFormat::GREEN . "Kit updated successfully!!!");
+		$player->sendMessage($translator->translate($player, LangKey::KIT_UPDATE->value));
 		Sound::addSound($player, SoundNames::GOOD_TONE->value);
 	}
 }

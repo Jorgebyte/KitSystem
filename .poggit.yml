@@ -12,11 +12,14 @@ projects:
       - src: LatamPMDevs/Commando/Commando
         version: "^3.1.1"
         branch: pm5
+      - src: IvanCraft623/languages/languages
+        version: ^0.0.3
+        branch: main
       - src: dresnite/easyui/libEasyUI
         version: "^1.0.3"
         branch: pm5
       - src: presentkim-pm/item-serialize-utils/item-serialize-utils
-        version: "^1.3.0"
+        version: "^3.1.0"
         branch: main
       - src: DaPigGuy/libPiggyEconomy/libPiggyEconomy
         version: "^3.0.3"
@@ -24,4 +27,7 @@ projects:
       - src: muqsit/invmenu/InvMenu
         version: "^4.6.5"
         branch: pm5
+      - src: poggit/libasynql/libasynql
+        version: "^4.2.3"
+        branch: master
 ...

@@ -1,12 +1,12 @@
 <?php
 
 /*
- *   -- KitSystem --
+ *    -- KitSystem --
  *
- *   Author: Jorgebyte
- *   Discord Contact: jorgess__
+ *    Author: Jorgebyte
+ *    Discord Contact: jorgess__
  *
- *  https://github.com/Jorgebyte/KitSystem
+ *   https://github.com/Jorgebyte/KitSystem
  */
 
 declare(strict_types=1);
@@ -18,18 +18,16 @@ use pocketmine\permission\DefaultPermissions;
 use pocketmine\player\Player;
 use function array_values;
 
-class Category{
-	private string $name;
-	private string $prefix;
-	private ?string $permission;
-	private ?string $icon;
+final class Category{
+	/** @var array<string, Kit> */
 	private array $kits = [];
 
-	public function __construct(string $name, string $prefix, ?string $permission = null, ?string $icon = null){
-		$this->name = $name;
-		$this->prefix = $prefix;
-		$this->permission = $permission;
-		$this->icon = $icon;
+	public function __construct(
+		private readonly string $name,
+		private string          $prefix,
+		private ?string         $permission = null,
+		private ?string         $icon = null
+	){
 	}
 
 	public function getName() : string{
@@ -69,9 +67,7 @@ class Category{
 	}
 
 	public function removeKit(string $kitName) : void{
-		if(isset($this->kits[$kitName])){
-			unset($this->kits[$kitName]);
-		}
+		unset($this->kits[$kitName]);
 	}
 
 	public function hasKit(string $kitName) : bool{

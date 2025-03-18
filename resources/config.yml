@@ -1,3 +1,16 @@
+default-language: en_US
+
+database:
+  type: sqlite   # o "mysql"
+  sqlite:
+    file: data.sqlite
+  mysql:
+    host: 127.0.0.1
+    username: root
+    password: ""
+    schema: your_schema
+  worker-limit: 1
+
 economy:
   provider: bedrockeconomy
 
