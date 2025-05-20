@@ -23,7 +23,6 @@ use pocketmine\item\StringToItemParser;
 use pocketmine\player\Player;
 use pocketmine\promise\Promise;
 use pocketmine\promise\PromiseResolver;
-use pocketmine\utils\TextFormat;
 use RuntimeException;
 use function array_values;
 use function is_string;
@@ -109,10 +108,11 @@ final class KitManager{
 
 	public function giveKitChest(Player $player, Kit $kit) : void{
 		$config = Main::getInstance()->getConfig();
+		$translator = Main::getInstance()->getTranslator();
 		$kitChestString = $config->get('chest-kit');
 
 		if(!is_string($kitChestString)){
-			$player->sendMessage(TextFormat::RED . "ERROR: Invalid chest-kit configuration");
+			$player->sendMessage($translator->translate($player, LangKey::INVALID_CHEST_KIT->value));
 			return;
 		}
 

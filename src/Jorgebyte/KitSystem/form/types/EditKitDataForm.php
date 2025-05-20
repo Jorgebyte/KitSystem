@@ -17,71 +17,92 @@ use EasyUI\element\Input;
 use EasyUI\element\Toggle;
 use EasyUI\utils\FormResponse;
 use EasyUI\variant\CustomForm;
+use IvanCraft623\languages\Translator;
 use Jorgebyte\KitSystem\Main;
 use Jorgebyte\KitSystem\util\LangKey;
 use Jorgebyte\KitSystem\util\Sound;
 use Jorgebyte\KitSystem\util\SoundNames;
 use pocketmine\player\Player;
-use pocketmine\utils\TextFormat;
 use function is_numeric;
 
 class EditKitDataForm extends CustomForm{
+	private Player $player;
+	private Translator $translator;
+	private \Closure $t;
 	protected string $kitName;
 
-	public function __construct(string $kitName){
+	public function __construct(Player $player, string $kitName){
+		$this->player = $player;
+		$this->translator = Main::getInstance()->getTranslator();
 		$this->kitName = $kitName;
-		parent::__construct("KitSystem - Edit Kit Data");
+		$this->t = function(string $key, array $r = []) : string{
+			return $this->translator->translate($this->player, $key, $r);
+		};
+
+		parent::__construct(
+			($this->t)(LangKey::TITLE_EDIT_KIT_DATA->value)
+		);
 	}
 
 	public function onCreation() : void{
+		$t = $this->t;
 		$kit = Main::getInstance()->getKitManager()->getKit($this->kitName);
-		if($kit === null){
-			return;
-		}
+		if($kit === null)return;
 
-		$this->addElement("kitPrefix", new Input("Prefix", $kit->getPrefix()));
-		$this->addElement("cooldown", new Input("Cooldown (optional, in seconds)", (string) $kit->getCooldown()));
-		$this->addElement("price", new Input("Price (optional)", (string) $kit->getPrice()));
-		$this->addElement("permission", new Input("Permission (optional)", $kit->getPermission() ?? ""));
-		$this->addElement("icon", new Input("Icon URL (optional)", $kit->getIcon() ?? ""));
-		$this->addElement("storeInChest", new Toggle("Store in chest?", $kit->shouldStoreInChest()));
+		$this->addElement("kitPrefix", new Input(
+			$t(LangKey::LABEL_KIT_PREFIX->value),
+			$kit->getPrefix()
+		));
+		$this->addElement("cooldown", new Input(
+			$t(LangKey::LABEL_COOLDOWN->value),
+			(string) $kit->getCooldown()
+		));
+		$this->addElement("price", new Input(
+			$t(LangKey::LABEL_PRICE->value),
+			(string) $kit->getPrice()
+		));
+		$this->addElement("permission", new Input(
+			$t(LangKey::LABEL_PERMISSION->value),
+			$kit->getPermission() ?? ""
+		));
+		$this->addElement("icon", new Input(
+			$t(LangKey::LABEL_ICON->value),
+			$kit->getIcon() ?? ""
+		));
+		$this->addElement("storeInChest", new Toggle(
+			$t(LangKey::LABEL_STORE_IN_CHEST->value),
+			$kit->shouldStoreInChest()
+		));
 	}
 
 	protected function onSubmit(Player $player, FormResponse $response) : void{
-		$translator = Main::getInstance()->getTranslator();
+		$t = $this->t;
 		$kit = Main::getInstance()->getKitManager()->getKit($this->kitName);
-		if($kit === null){
-			return;
-		}
+		if($kit === null)return;
 
-		$kitPrefix = $response->getInputSubmittedText("kitPrefix");
-
-		$cooldownInput = $response->getInputSubmittedText("cooldown");
-		$cooldown = is_numeric($cooldownInput) ? (int) $cooldownInput : null;
-		$priceInput = $response->getInputSubmittedText("price");
-		$price = is_numeric($priceInput) ? (float) $priceInput : null;
-
-		$permission = $response->getInputSubmittedText("permission");
-		$permission = $permission === "" ? null : $permission;
-		$icon = $response->getInputSubmittedText("icon");
-		$icon = $icon === "" ? null : $icon;
-
+		$prefix = $response->getInputSubmittedText("kitPrefix");
+		$cdInput = $response->getInputSubmittedText("cooldown");
+		$prInput = $response->getInputSubmittedText("price");
+		$perm = $response->getInputSubmittedText("permission") ?: null;
+		$icon = $response->getInputSubmittedText("icon")       ?: null;
 		$storeInChest = $response->getToggleSubmittedChoice("storeInChest");
 
-		if($kitPrefix === ''){
-			$player->sendMessage(TextFormat::RED . "ERROR: The prefix is REQUIRED");
+		if($prefix === ""){
+			$player->sendMessage($t(LangKey::ERROR_KIT_REQUIRED->value));
 			Sound::addSound($player, SoundNames::BAD_TONE->value);
 			return;
 		}
 
-		$kit->setPrefix($kitPrefix);
-		$kit->setCooldown($cooldown);
-		$kit->setPrice($price);
-		$kit->setPermission($permission);
+		$kit->setPrefix($prefix);
+		$kit->setCooldown(is_numeric($cdInput) ? (int) $cdInput : null);
+		$kit->setPrice(is_numeric($prInput) ? (float) $prInput : null);
+		$kit->setPermission($perm);
 		$kit->setIcon($icon);
 		$kit->setStoreInChest($storeInChest);
+
 		Main::getInstance()->getKitManager()->saveKit($kit);
-		$player->sendMessage($translator->translate($player, LangKey::KIT_UPDATE->value));
+
+		$player->sendMessage($t(LangKey::KIT_UPDATE->value));
 		Sound::addSound($player, SoundNames::GOOD_TONE->value);
 	}
 }

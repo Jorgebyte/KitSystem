@@ -32,6 +32,6 @@ class PreviewKitCommand extends BaseSubCommand{
 
 	public function onRun(CommandSender $sender, string $aliasUsed, array $args) : void{
 		/** @var Player $sender */
-		FormManager::sendForm($sender, FormTypes::SELECT_KIT->value, ["previewkit"]);
+		FormManager::sendForm($sender, FormTypes::SELECT_KIT->value, [$sender, "previewkit"]);
 	}
 }

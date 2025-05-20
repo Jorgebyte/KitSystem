@@ -45,6 +45,6 @@ class ClaimListener implements Listener{
 		$kitManager->giveKitItems($player, $kit);
 		$player->getInventory()->removeItem($item->setCount(1));
 		$player->sendMessage($translator->translate($player, LangKey::OPEN_KIT->value,
-			["{%kitname}" => $kitName]));
+			["%kitname%" => $kitName]));
 	}
 }

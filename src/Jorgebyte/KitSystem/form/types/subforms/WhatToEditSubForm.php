@@ -15,32 +15,48 @@ namespace Jorgebyte\KitSystem\form\types\subforms;
 
 use EasyUI\element\Button;
 use EasyUI\variant\SimpleForm;
+use IvanCraft623\languages\Translator;
 use Jorgebyte\KitSystem\form\FormManager;
 use Jorgebyte\KitSystem\form\FormTypes;
+use Jorgebyte\KitSystem\Main;
 use Jorgebyte\KitSystem\menu\MenuManager;
 use Jorgebyte\KitSystem\menu\MenuTypes;
+use Jorgebyte\KitSystem\util\LangKey;
 use pocketmine\player\Player;
 
 class WhatToEditSubForm extends SimpleForm{
-	protected string $kitName;
+	private Player $player;
+	private string $kitName;
+	private Translator $translator;
+	private \Closure $t;
 
-	public function __construct(string $kitName){
+	public function __construct(Player $player, string $kitName){
+		$this->player = $player;
 		$this->kitName = $kitName;
-		parent::__construct("KitSystem - What do you plan to edit?");
+		$this->translator = Main::getInstance()->getTranslator();
+		$this->t = function(string $key, array $replacements = []) : string{
+			return $this->translator->translate($this->player, $key, $replacements);
+		};
+
+		parent::__construct(
+			($this->t)(LangKey::TITLE_WHAT_TO_EDIT->value)
+		);
 	}
 
 	protected function onCreation() : void{
-		$editItemsButton = new Button("Edit Items");
-		$editItemsButton->setSubmitListener(function (Player $sender) : void{
-			MenuManager::sendMenu($sender, MenuTypes::EDIT_KIT->value, [$this->kitName]);
-		});
+		$t = $this->t;
 
-		$editDataButton = new Button("Edit Data");
-		$editDataButton->setSubmitListener(function (Player $sender) : void{
-			FormManager::sendForm($sender, FormTypes::EDIT_KIT_DATA->value, [$this->kitName]);
-		});
+		$editItems = new Button($t(LangKey::BUTTON_LABEL_EDIT_ITEMS->value));
+		$editItems->setSubmitListener(fn(Player $sender) =>
+		MenuManager::sendMenu($sender, MenuTypes::EDIT_KIT->value, [$this->kitName])
+		);
 
-		$this->addButton($editItemsButton);
-		$this->addButton($editDataButton);
+		$editData = new Button($t(LangKey::BUTTON_LABEL_EDIT_DATA->value));
+		$editData->setSubmitListener(fn(Player $sender) =>
+		FormManager::sendForm($sender, FormTypes::EDIT_KIT_DATA->value, [$sender, $this->kitName])
+		);
+
+		$this->addButton($editItems);
+		$this->addButton($editData);
 	}
 }

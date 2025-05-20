@@ -41,6 +41,6 @@ class DeleteCategoryCommand extends BaseSubCommand{
 			FormManager::sendForm($sender, FormTypes::DELETE_CATEGORY_SUBFORM->value, [$category->getName()]);
 			return;
 		}
-		FormManager::sendForm($sender, FormTypes::SELECT_CATEGORY->value, ["deletecategory"]);
+		FormManager::sendForm($sender, FormTypes::SELECT_CATEGORY->value, [$sender, "deletecategory"]);
 	}
 }

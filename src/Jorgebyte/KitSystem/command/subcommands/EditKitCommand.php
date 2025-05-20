@@ -38,9 +38,9 @@ class EditKitCommand extends BaseSubCommand{
 		if(isset($args["kit"])){
 			/** @var Kit $kit */
 			$kit = $args["kit"];
-			FormManager::sendForm($sender, FormTypes::WHAT_TO_EDIT_SUBFORM->value, [$kit->getName()]);
+			FormManager::sendForm($sender, FormTypes::WHAT_TO_EDIT_SUBFORM->value, [$sender, $kit->getName()]);
 			return;
 		}
-		FormManager::sendForm($sender, FormTypes::SELECT_KIT->value, ["editkit"]);
+		FormManager::sendForm($sender, FormTypes::SELECT_KIT->value, [$sender, "editkit"]);
 	}
 }

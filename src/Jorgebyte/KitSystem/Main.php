@@ -34,170 +34,191 @@ use pocketmine\utils\Config;
 use pocketmine\utils\SingletonTrait;
 use poggit\libasynql\DataConnector;
 use poggit\libasynql\libasynql;
+use function array_map;
+use function basename;
+use function glob;
 use function is_array;
+use function parse_ini_file;
+use const DIRECTORY_SEPARATOR;
+use const INI_SCANNER_RAW;
 
 final class Main extends PluginBase{
-    use SingletonTrait;
+	use SingletonTrait;
 
-    private const DEFAULT_LANGUAGE = "en_US";
+	private const DEFAULT_LANGUAGE = "en_US";
 
-    private DataConnector $database;
-    private KitManager $kitManager;
-    private CategoryManager $categoryManager;
-    private CooldownManager $cooldownManager;
-    private EconomyProvider $economyProvider;
-    private Config $config;
-    private Translator $translator;
+	private DataConnector $database;
+	private KitManager $kitManager;
+	private CategoryManager $categoryManager;
+	private CooldownManager $cooldownManager;
+	private EconomyProvider $economyProvider;
+	private Config $config;
+	private Translator $translator;
 
-    public function onLoad(): void {
-        self::setInstance($this);
-    }
+	public function onLoad() : void{
+		self::setInstance($this);
+	}
 
-    /**
-     * @throws UnknownProviderException
-     * @throws HookAlreadyRegistered
-     * @throws MissingProviderDependencyException
-     * @throws Exception
-     */
-    public function onEnable(): void {
-        $this->initializeHooks();
-        $this->saveResources();
-        $this->initializeConfig();
-        $this->loadTranslations();
-        $this->initializeDatabase();
-        $this->initializeManagers();
-        $this->registerCommandsAndEvents();
-    }
+	/**
+	 * @throws UnknownProviderException
+	 * @throws HookAlreadyRegistered
+	 * @throws MissingProviderDependencyException
+	 * @throws Exception
+	 */
+	public function onEnable() : void{
+		$this->initializeHooks();
+		$this->saveResources();
+		$this->initializeConfig();
+		$this->loadTranslations();
+		$this->initializeDatabase();
+		$this->initializeManagers();
+		$this->registerCommandsAndEvents();
+	}
 
+	/**
+	 * @throws HookAlreadyRegistered
+	 */
+	private function initializeHooks() : void{
+		if(!PacketHooker::isRegistered()){
+			PacketHooker::register($this);
+		}
+		if(!InvMenuHandler::isRegistered()){
+			InvMenuHandler::register($this);
+		}
+	}
 
-    /**
-     * @throws HookAlreadyRegistered
-     */
-    private function initializeHooks(): void {
-        if (!PacketHooker::isRegistered()) {
-            PacketHooker::register($this);
-        }
-        if (!InvMenuHandler::isRegistered()) {
-            InvMenuHandler::register($this);
-        }
-    }
+	private function initializeConfig() : void{
+		$defaults = [
+			"default-language" => self::DEFAULT_LANGUAGE,
+			"database" => [
+				"type" => "sqlite",
+				"sqlite" => ["file" => "data.sqlite"],
+				"mysql" => [
+					"host" => "127.0.0.1",
+					"username" => "root",
+					"password" => "",
+					"schema" => "your_schema"
+				],
+				"worker-limit" => 1
+			],
+			"economy" => ["provider" => "bedrockeconomy"],
+			"chest-kit" => "chest",
+			"enable-starterkit" => false,
+			"starterkit" => "StarterKit"
+		];
 
-    private function initializeConfig(): void {
-        $defaults = [
-            "default-language" => self::DEFAULT_LANGUAGE,
-            "database" => [
-                "type" => "sqlite",
-                "sqlite" => ["file" => "data.sqlite"],
-                "mysql" => [
-                    "host" => "127.0.0.1",
-                    "username" => "root",
-                    "password" => "",
-                    "schema" => "your_schema"
-                ],
-                "worker-limit" => 1
-            ],
-            "economy" => ["provider" => "bedrockeconomy"],
-            "chest-kit" => "chest",
-            "enable-starterkit" => false,
-            "starterkit" => "StarterKit"
-        ];
+		$this->config = new Config($this->getDataFolder() . "config.yml", Config::YAML, $defaults);
+	}
 
-        $this->config = new Config($this->getDataFolder() . "config.yml", Config::YAML, $defaults);
-    }
+	private function initializeDatabase() : void{
+		$this->database = libasynql::create(
+			$this,
+			$this->config->get("database"),
+			[
+				"sqlite" => "database/sqlite.sql",
+				"mysql" => "database/mysql.sql"
+			]
+		);
 
-    private function initializeDatabase(): void {
-        $this->database = libasynql::create(
-            $this,
-            $this->config->get("database"),
-            [
-                "sqlite" => "database/sqlite.sql",
-                "mysql" => "database/mysql.sql"
-            ]
-        );
+		foreach(["kits", "categories", "cooldowns", "category_kits"] as $table){
+			$this->database->executeGeneric("{$table}.table");
+		}
+	}
 
-        foreach (["kits", "categories", "cooldowns", "category_kits"] as $table) {
-            $this->database->executeGeneric("{$table}.table");
-        }
-    }
+	/**
+	 * @throws UnknownProviderException
+	 * @throws MissingProviderDependencyException
+	 * @throws Exception
+	 */
+	private function initializeManagers() : void{
+		try{
+			$this->kitManager = new KitManager();
+		} catch(Exception $e){
+			$this->getLogger()->error($e->getMessage());
+		}
+		$this->categoryManager = new CategoryManager();
+		$this->cooldownManager = new CooldownManager();
 
-    /**
-     * @throws UnknownProviderException
-     * @throws MissingProviderDependencyException
-     * @throws Exception
-     */
-    private function initializeManagers(): void {
-        try {
-            $this->kitManager = new KitManager();
-        } catch (Exception $e) {
-            $this->getLogger()->error($e->getMessage());
-        }
-        $this->categoryManager = new CategoryManager();
-        $this->cooldownManager = new CooldownManager();
+		libPiggyEconomy::init();
+		$providerInfo = $this->config->get("economy");
+		if(!is_array($providerInfo)){
+			throw new Exception("ERROR: Economy provider information must be an array in the configuration");
+		}
+		$this->economyProvider = libPiggyEconomy::getProvider($providerInfo);
+	}
 
-        libPiggyEconomy::init();
-        $providerInfo = $this->config->get("economy");
-        if (!is_array($providerInfo)) {
-            throw new Exception("ERROR: Economy provider information must be an array in the configuration");
-        }
-        $this->economyProvider = libPiggyEconomy::getProvider($providerInfo);
-    }
+	private function registerCommandsAndEvents() : void{
+		$this->getServer()->getCommandMap()->register("KitSystem", new KitSystemCommand($this));
+		$this->getServer()->getPluginManager()->registerEvents(new ClaimListener(), $this);
+		$this->getServer()->getPluginManager()->registerEvents(new JoinListener(), $this);
+	}
 
-    private function registerCommandsAndEvents(): void {
-        $this->getServer()->getCommandMap()->register("KitSystem", new KitSystemCommand($this));
-        $this->getServer()->getPluginManager()->registerEvents(new ClaimListener(), $this);
-        $this->getServer()->getPluginManager()->registerEvents(new JoinListener(), $this);
-    }
+	/**
+	 * @throws Exception
+	 */
+	private function loadTranslations() : void{
+		$this->translator = new Translator($this);
+		foreach(glob($this->getDataFolder() . "languages" . DIRECTORY_SEPARATOR . "*.ini") as $file){
+			$locale = basename($file, ".ini");
+			$content = parse_ini_file($file, false, INI_SCANNER_RAW);
+			if(!is_array($content)){
+				throw new Exception("Missing or inaccessible required resource files");
+			}
+			$this->translator->registerLanguage(new Language($locale, array_map('stripcslashes', $content)));
+		}
+		$this->translator->setDefaultLanguage(
+			$this->translator->getLanguage($this->config->get("default-language", self::DEFAULT_LANGUAGE))
+		);
+	}
 
-    /**
-     * @throws Exception
-     */
-    private function loadTranslations(): void {
-        $this->translator = new Translator($this);
-        foreach (glob($this->getDataFolder() . "languages" . DIRECTORY_SEPARATOR . "*.ini") as $file) {
-            $locale = basename($file, ".ini");
-            $content = parse_ini_file($file, false, INI_SCANNER_RAW);
-            if (!is_array($content)) {
-                throw new Exception("Missing or inaccessible required resource files");
-            }
-            $this->translator->registerLanguage(new Language($locale, array_map('stripcslashes', $content)));
-        }
-        $this->translator->setDefaultLanguage(
-            $this->translator->getLanguage($this->config->get("default-language", self::DEFAULT_LANGUAGE))
-        );
-    }
-
-    public function saveResources(): void {
+    public function saveResources() : void{
         $this->saveResource("config.yml");
-        foreach (["en_US", "es_MX", "fr_FR", "id_ID", "it_IT", "ja_JP", "pt_BR"] as $lang) {
-            $this->saveResource("languages/{$lang}.ini", true);
+
+        $languageDir = $this->getFile() . "resources" . DIRECTORY_SEPARATOR . "languages";
+        if(!is_dir($languageDir)){
+            $this->getLogger()->warning("No language resource directory found");
+            return;
+        }
+
+        $resourceLanguages = scandir($languageDir);
+        if($resourceLanguages === false){
+            $this->getLogger()->warning("Failed to read language resource directory");
+            return;
+        }
+
+        foreach($resourceLanguages as $file){
+            if(pathinfo($file, PATHINFO_EXTENSION) !== "ini") continue;
+
+            $this->saveResource("languages/" . $file, true);
         }
     }
 
-    public function onDisable(): void {
-        if (isset($this->database)) $this->database->close();
-    }
 
-    public function getKitManager(): KitManager {
-        return $this->kitManager;
-    }
+    public function onDisable() : void{
+		if(isset($this->database))$this->database->close();
+	}
 
-    public function getCategoryManager(): CategoryManager {
-        return $this->categoryManager;
-    }
+	public function getKitManager() : KitManager{
+		return $this->kitManager;
+	}
 
-    public function getCooldownManager(): CooldownManager {
-        return $this->cooldownManager;
-    }
+	public function getCategoryManager() : CategoryManager{
+		return $this->categoryManager;
+	}
 
-    public function getEconomyProvider(): EconomyProvider {
-        return $this->economyProvider;
-    }
+	public function getCooldownManager() : CooldownManager{
+		return $this->cooldownManager;
+	}
 
-    public function getTranslator(): Translator {
-        return $this->translator;
-    }
+	public function getEconomyProvider() : EconomyProvider{
+		return $this->economyProvider;
+	}
 
-    public function getDatabase(): DataConnector {
-        return $this->database;
-    }
+	public function getTranslator() : Translator{
+		return $this->translator;
+	}
+
+	public function getDatabase() : DataConnector{
+		return $this->database;
+	}
 }

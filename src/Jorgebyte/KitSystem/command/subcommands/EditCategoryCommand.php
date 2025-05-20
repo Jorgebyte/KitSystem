@@ -38,9 +38,9 @@ class EditCategoryCommand extends BaseSubCommand{
 		if(isset($args["category"])){
 			/** @var Category $category */
 			$category = $args["category"];
-			FormManager::sendForm($sender, FormTypes::EDIT_CATEGORY_FORM->value, [$category->getName()]);
+			FormManager::sendForm($sender, FormTypes::EDIT_CATEGORY_FORM->value, [$sender, $category->getName()]);
 			return;
 		}
-		FormManager::sendForm($sender, FormTypes::SELECT_CATEGORY->value, ["editcategory"]);
+		FormManager::sendForm($sender, FormTypes::SELECT_CATEGORY->value, [$sender, "editcategory"]);
 	}
 }

@@ -32,6 +32,6 @@ class CreateKitCommand extends BaseSubCommand{
 
 	public function onRun(CommandSender $sender, string $aliasUsed, array $args) : void{
 		/** @var Player $sender */
-		FormManager::sendForm($sender, FormTypes::CREATE_KIT->value);
+		FormManager::sendForm($sender, FormTypes::CREATE_KIT->value, [$sender]);
 	}
 }

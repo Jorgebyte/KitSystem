@@ -38,9 +38,9 @@ class DeleteKitCommand extends BaseSubCommand{
 		if(isset($args["kit"])){
 			/** @var Kit $kit */
 			$kit = $args["kit"];
-			FormManager::sendForm($sender, FormTypes::DELETE_KIT_SUBFORM->value, [$kit->getName()]);
+			FormManager::sendForm($sender, FormTypes::DELETE_KIT_SUBFORM->value, [$sender, $kit->getName()]);
 			return;
 		}
-		FormManager::sendForm($sender, FormTypes::SELECT_KIT->value, ["deletekit"]);
+		FormManager::sendForm($sender, FormTypes::SELECT_KIT->value, [$sender, "deletekit"]);
 	}
 }

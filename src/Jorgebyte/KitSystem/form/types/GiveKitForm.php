@@ -18,72 +18,91 @@ use EasyUI\element\Option;
 use EasyUI\element\Slider;
 use EasyUI\utils\FormResponse;
 use EasyUI\variant\CustomForm;
+use IvanCraft623\languages\Translator;
 use Jorgebyte\KitSystem\Main;
+use Jorgebyte\KitSystem\util\LangKey;
 use Jorgebyte\KitSystem\util\PlayerUtil;
 use pocketmine\player\Player;
 use pocketmine\Server;
-use pocketmine\utils\TextFormat;
 
 class GiveKitForm extends CustomForm{
-	public function __construct(){
-		parent::__construct("KitSystem - Give a Kit");
+	private Player $player;
+	private Translator $translator;
+	private \Closure $t;
+
+	public function __construct(Player $player){
+		$this->player = $player;
+		$this->translator = Main::getInstance()->getTranslator();
+		$this->t = function(string $key, array $r = []) : string{
+			return $this->translator->translate($this->player, $key, $r);
+		};
+		parent::__construct(
+			($this->t)(LangKey::TITLE_GIVE_KIT->value)
+		);
 	}
 
 	protected function onCreation() : void{
+		$t = $this->t;
 		$onlinePlayers = Server::getInstance()->getOnlinePlayers();
-		$dropdownPlayers = new Dropdown("Select a Player");
-
-		foreach($onlinePlayers as $player){
-			$dropdownPlayers->addOption(new Option($player->getName(), $player->getName()));
+		$dropPlayer = new Dropdown($t(LangKey::LABEL_SELECT_PLAYER->value));
+		foreach($onlinePlayers as $p){
+			$dropPlayer->addOption(new Option($p->getName(), $p->getName()));
 		}
-
-		$this->addElement("selectedPlayer", $dropdownPlayers);
+		$this->addElement("selectedPlayer", $dropPlayer);
 
 		$kitManager = Main::getInstance()->getKitManager();
-		$kits = $kitManager->getAllKits();
-		$dropdownKits = new Dropdown("Select a Kit");
-
-		foreach($kits as $kit){
-			$dropdownKits->addOption(new Option($kit->getName(), $kit->getName()));
+		$dropKit = new Dropdown($t(LangKey::LABEL_SELECT_KIT->value));
+		foreach($kitManager->getAllKits() as $kit){
+			$dropKit->addOption(new Option($kit->getName(), $kit->getName()));
 		}
-
-		$this->addElement("selectedKit", $dropdownKits);
-		$this->addElement("kitQuantity", new Slider("How many kits?", 1, 64, 1, 1));
+		$this->addElement("selectedKit", $dropKit);
+		$this->addElement("kitQuantity", new Slider(
+			$t(LangKey::LABEL_KIT_QUANTITY->value),
+			1, 64, 1, 1
+		));
 	}
 
 	protected function onSubmit(Player $player, FormResponse $response) : void{
-		$selectedPlayerName = $response->getDropdownSubmittedOptionId("selectedPlayer");
-		// Player selected by the form \\
-		$targetPlayer = Server::getInstance()->getPlayerExact($selectedPlayerName);
+		$t = $this->t;
+		$kitManager = Main::getInstance()->getKitManager();
 
-		if($targetPlayer === null){
-			$player->sendMessage(TextFormat::RED . "ERROR: The selected player is no longer online.");
+		$targetName = $response->getDropdownSubmittedOptionId("selectedPlayer");
+		$target = Server::getInstance()->getPlayerExact($targetName);
+		if($target === null){
+			$player->sendMessage($t(LangKey::PLAYER_NOT_ONLINE->value));
 			return;
 		}
 
-		$selectedKitName = $response->getDropdownSubmittedOptionId("selectedKit");
-		$kitManager = Main::getInstance()->getKitManager();
-		$kit = $kitManager->getKit($selectedKitName);
-
+		$kitName = $response->getDropdownSubmittedOptionId("selectedKit");
+		$kit = $kitManager->getKit($kitName);
 		if($kit === null){
-			$player->sendMessage(TextFormat::RED . "ERROR: The selected kit does not exist.");
+			$player->sendMessage($t(LangKey::ERROR_KIT_NOT_EXIST->value));
 			return;
 		}
 
 		$quantity = (int) $response->getSliderSubmittedStep("kitQuantity");
-
-		if(!$kit->shouldStoreInChest() && !PlayerUtil::hasEnoughSpace($targetPlayer, $kit)){
-			$player->sendMessage(TextFormat::RED . "ERROR: The player does not have enough space in the inventory.");
+		if(!$kit->shouldStoreInChest() && !PlayerUtil::hasEnoughSpace($target, $kit)){
+			$player->sendMessage($t(
+				LangKey::ERROR_INVENTORY_SPACE->value,
+				['%player%' => $target->getName()]
+			));
 			return;
 		}
 
 		for($i = 0; $i < $quantity; $i++){
 			if($kit->shouldStoreInChest()){
-				$kitManager->giveKitChest($targetPlayer, $kit);
+				$kitManager->giveKitChest($target, $kit);
 			} else{
-				$kitManager->giveKitItems($targetPlayer, $kit);
+				$kitManager->giveKitItems($target, $kit);
 			}
 		}
-		$player->sendMessage(TextFormat::GREEN . "Successfully gave " . $quantity . " kit(s) to " . $targetPlayer->getName());
+
+		$player->sendMessage($t(
+			LangKey::GIVE_KIT_SUCCESS->value,
+			[
+				'%quantity%' => (string) $quantity,
+				'%player%' => $target->getName()
+			]
+		));
 	}
 }

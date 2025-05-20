@@ -17,45 +17,88 @@ use EasyUI\element\Input;
 use EasyUI\utils\FormResponse;
 use EasyUI\variant\CustomForm;
 use Exception;
+use IvanCraft623\languages\Translator;
 use Jorgebyte\KitSystem\Main;
+use Jorgebyte\KitSystem\util\LangKey;
 use Jorgebyte\KitSystem\util\Sound;
 use Jorgebyte\KitSystem\util\SoundNames;
 use pocketmine\player\Player;
-use pocketmine\utils\TextFormat;
 
 class CreateCategoryForm extends CustomForm{
-	public function __construct(){
-		parent::__construct("KitSystem - Create Category");
+	private Player $player;
+	private Translator $translator;
+	private \Closure $t;
+
+	public function __construct(Player $player){
+		$this->player = $player;
+		$this->translator = Main::getInstance()->getTranslator();
+		$this->t = function(string $key, array $replacements = []) : string{
+			return $this->translator->translate($this->player, $key, $replacements);
+		};
+
+		parent::__construct(
+			($this->t)(LangKey::TITLE_CREATE_CATEGORY->value)
+		);
 	}
 
 	public function onCreation() : void{
-		$this->addElement("categoryName", new Input("Category Name", null, "E.g. Pay"));
-		$this->addElement("categoryPrefix", new Input("Prefix", null, "E.g. [Pay]"));
-		$this->addElement("permission", new Input("Permission (optional)", null, "E.g. category.warriors.use"));
-		$this->addElement("icon", new Input("Icon URL (optional)", null, "https://example.com/icon.png"));
+		$t = $this->t;
+		$this->addElement("categoryName", new Input(
+			$t(LangKey::LABEL_CATEGORY_NAME->value),
+			null,
+			$t(LangKey::PLACEHOLDER_CATEGORY_NAME->value)
+		));
+		$this->addElement("categoryPrefix", new Input(
+			$t(LangKey::LABEL_CATEGORY_PREFIX->value),
+			null,
+			$t(LangKey::PLACEHOLDER_CATEGORY_PREFIX->value)
+		));
+		$this->addElement("permission", new Input(
+			$t(LangKey::LABEL_PERMISSION->value),
+			null,
+			$t(LangKey::PLACEHOLDER_PERMISSION->value)
+		));
+		$this->addElement("icon", new Input(
+			$t(LangKey::LABEL_ICON->value),
+			null,
+			$t(LangKey::PLACEHOLDER_ICON->value)
+		));
 	}
 
 	protected function onSubmit(Player $player, FormResponse $response) : void{
-		$categoryName = $response->getInputSubmittedText("categoryName");
-		$categoryPrefix = $response->getInputSubmittedText("categoryPrefix");
-		$permission = $response->getInputSubmittedText("permission");
-		$icon = $response->getInputSubmittedText("icon");
+		$t = $this->t;
 
-		if($categoryName === '' || $categoryPrefix === ''){
-			$player->sendMessage(TextFormat::RED . "ERROR: The Category Name and Prefix are REQUIRED!!!");
+		$name = $response->getInputSubmittedText("categoryName");
+		$prefix = $response->getInputSubmittedText("categoryPrefix");
+		$perm = $response->getInputSubmittedText("permission") ?: null;
+		$icon = $response->getInputSubmittedText("icon")       ?: null;
+
+		if($name === '' || $prefix === ''){
+			$player->sendMessage($t(LangKey::ERROR_CATEGORY_REQUIRED->value));
 			Sound::addSound($player, SoundNames::BAD_TONE->value);
 			return;
 		}
 
-		$permission = $permission === '' ? null : $permission;
-		$icon = $icon === '' ? null : $icon;
-
 		try{
-			Main::getInstance()->getCategoryManager()->createCategory($categoryName, $categoryPrefix, $permission, $icon);
-			$player->sendMessage(TextFormat::GREEN . "Category: " . TextFormat::MINECOIN_GOLD . $categoryName . TextFormat::GREEN . " created successfully!");
+			Main::getInstance()
+				->getCategoryManager()
+				->createCategory($name, $prefix, $perm, $icon);
+
+			$player->sendMessage(
+				$t(
+					LangKey::CATEGORY_CREATED_SUCCESS->value,
+					['%category%' => $name]
+				)
+			);
 			Sound::addSound($player, SoundNames::GOOD_TONE->value);
+
 		} catch(Exception $e){
-			$player->sendMessage(TextFormat::RED . "ERROR: " . $e->getMessage());
+			$player->sendMessage(
+				$t(
+					LangKey::ERROR_GENERIC->value,
+					['%error%' => $e->getMessage()]
+				)
+			);
 			Sound::addSound($player, SoundNames::BAD_TONE->value);
 		}
 	}
