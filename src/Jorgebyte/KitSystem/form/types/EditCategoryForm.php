@@ -18,96 +18,110 @@ use EasyUI\element\Input;
 use EasyUI\element\Option;
 use EasyUI\utils\FormResponse;
 use EasyUI\variant\CustomForm;
+use IvanCraft623\languages\Translator;
 use Jorgebyte\KitSystem\Main;
+use Jorgebyte\KitSystem\util\LangKey;
 use Jorgebyte\KitSystem\util\Sound;
 use Jorgebyte\KitSystem\util\SoundNames;
 use pocketmine\player\Player;
-use pocketmine\utils\TextFormat;
 use function array_filter;
 
+/**
+ * Custom form to edit an existing category, including its prefix, permission, icon,
+ * and associated kits (add or remove kits).
+ */
 class EditCategoryForm extends CustomForm{
+	private Player $player;
+	private Translator $translator;
+	private \Closure $t;
 	protected string $categoryName;
 
-	public function __construct(string $categoryName){
+	/**
+	 * @param Player $player       The player editing the category
+	 * @param string $categoryName The name of the category to edit
+	 */
+	public function __construct(Player $player, string $categoryName){
+		$this->player = $player;
+		$this->translator = Main::getInstance()->getTranslator();
 		$this->categoryName = $categoryName;
-		parent::__construct("KitSystem - Edit Category");
+		$this->t = function(string $key, array $r = []) : string{
+			return $this->translator->translate($this->player, $key, $r);
+		};
+
+		parent::__construct(
+			($this->t)(LangKey::TITLE_EDIT_CATEGORY->value)
+		);
 	}
 
 	public function onCreation() : void{
-		$categoryManager = Main::getInstance()->getCategoryManager();
-		$kitManager = Main::getInstance()->getKitManager();
-		$category = $categoryManager->getCategory($this->categoryName);
+		$t = $this->t;
+		$mgrCat = Main::getInstance()->getCategoryManager();
+		$mgrKit = Main::getInstance()->getKitManager();
+		$cat = $mgrCat->getCategory($this->categoryName);
+		if($cat === null)return;
 
-		if($category === null){
-			return;
+		$this->addElement("categoryPrefix", new Input(
+			$t(LangKey::LABEL_CATEGORY_PREFIX->value),
+			$cat->getPrefix()
+		));
+		$this->addElement("categoryPermission", new Input(
+			$t(LangKey::LABEL_PERMISSION->value),
+			$cat->getPermission() ?? ""
+		));
+		$this->addElement("categoryIcon", new Input(
+			$t(LangKey::LABEL_ICON->value),
+			$cat->getIcon() ?? ""
+		));
+
+		$add = new Dropdown($t(LangKey::LABEL_ADD_KIT->value));
+		$add->addOption(new Option("None", "None"));
+		foreach(array_filter($mgrKit->getAllKits(), fn($k) => !$cat->hasKit($k->getName())) as $k){
+			$add->addOption(new Option($k->getName(), $k->getName()));
 		}
+		$this->addElement("addKit", $add);
 
-		$this->addElement("categoryPrefix", new Input("Category Prefix", $category->getPrefix()));
-		$this->addElement("categoryPermission", new Input("Permission (optional)", null, $category->getPermission() ?? ""));
-		$this->addElement("categoryIcon", new Input("Icon URL (optional)", null, $category->getIcon() ?? ""));
-
-		$kitsToAddDropdown = new Dropdown("Add Kit to Category");
-		$kitsToAddDropdown->addOption(new Option("None", "None"));
-
-		$kitsNotInCategory = array_filter(
-			$kitManager->getAllKits(),
-			fn ($kit) => !$category->hasKit($kit->getName())
-		);
-
-		foreach($kitsNotInCategory as $kit){
-			$kitsToAddDropdown->addOption(new Option($kit->getName(), $kit->getName()));
+		$rem = new Dropdown($t(LangKey::LABEL_REMOVE_KIT->value));
+		$rem->addOption(new Option("None", "None"));
+		foreach($cat->getKits() as $k){
+			$rem->addOption(new Option($k->getName(), $k->getName()));
 		}
-
-		$this->addElement("addKit", $kitsToAddDropdown);
-
-		$kitsToRemoveDropdown = new Dropdown("Remove Kit from Category");
-		$kitsToRemoveDropdown->addOption(new Option("None", "None"));
-
-		foreach($category->getKits() as $kit){
-			$kitsToRemoveDropdown->addOption(new Option($kit->getName(), $kit->getName()));
-		}
-
-		$this->addElement("removeKit", $kitsToRemoveDropdown);
+		$this->addElement("removeKit", $rem);
 	}
 
 	protected function onSubmit(Player $player, FormResponse $response) : void{
-		$categoryManager = Main::getInstance()->getCategoryManager();
-		$kitManager = Main::getInstance()->getKitManager();
-		$category = $categoryManager->getCategory($this->categoryName);
-
-		if($category === null){
-			return;
-		}
+		$t = $this->t;
+		$mgrCat = Main::getInstance()->getCategoryManager();
+		$mgrKit = Main::getInstance()->getKitManager();
+		$cat = $mgrCat->getCategory($this->categoryName);
+		if($cat === null)return;
 
 		$prefix = $response->getInputSubmittedText("categoryPrefix");
-		$permission = $response->getInputSubmittedText("categoryPermission");
-		$icon = $response->getInputSubmittedText("categoryIcon");
-		$kitToAdd = $response->getDropdownSubmittedOptionId("addKit");
-		$kitToRemove = $response->getDropdownSubmittedOptionId("removeKit");
+		$permissionText = $response->getInputSubmittedText("categoryPermission");
+		$iconText = $response->getInputSubmittedText("categoryIcon");
+		$toAdd = $response->getDropdownSubmittedOptionId("addKit");
+		$toRemove = $response->getDropdownSubmittedOptionId("removeKit");
 
-		$category->setPrefix($prefix);
-		$category->setPermission($permission !== '' ? $permission : null);
-		$category->setIcon($icon !== '' ? $icon : null);
+		$cat->setPrefix($prefix);
+		$cat->setPermission($permissionText !== '' ? $permissionText : null);
+		$cat->setIcon($iconText !== '' ? $iconText : null);
 
-		if($kitToAdd !== "None"){
-			$kit = $kitManager->getKit($kitToAdd);
-			if($kit !== null){
-				$category->addKit($kit);
-				$player->sendMessage(TextFormat::GREEN . "The kit: " . TextFormat::MINECOIN_GOLD . $kit->getName() . TextFormat::GREEN . "Successfully added from the category");
-				Sound::addSound($player, SoundNames::GOOD_TONE->value);
-			}
+		if($toAdd !== "None" && ($kit = $mgrKit->getKit($toAdd)) !== null){
+			$cat->addKit($kit);
+			$player->sendMessage(
+				$t(LangKey::CATEGORY_KIT_ADDED_SUCCESS->value, ['%kit%' => $kit->getName()])
+			);
+			Sound::addSound($player, SoundNames::GOOD_TONE->value);
+		}
+		if($toRemove !== "None" && ($kit = $mgrKit->getKit($toRemove)) !== null){
+			$cat->removeKit($kit->getName());
+			$player->sendMessage(
+				$t(LangKey::CATEGORY_KIT_REMOVE_SUCCESS->value, ['%kit%' => $kit->getName()])
+			);
+			Sound::addSound($player, SoundNames::GOOD_TONE->value);
 		}
 
-		if($kitToRemove !== "None"){
-			$kit = $kitManager->getKit($kitToRemove);
-			if($kit !== null){
-				$category->removeKit($kit->getName());
-				$player->sendMessage(TextFormat::GREEN . "The kit: " . TextFormat::MINECOIN_GOLD . $kit->getName() . TextFormat::GREEN . "Successfully removed from the category");
-				Sound::addSound($player, SoundNames::GOOD_TONE->value);
-			}
-		}
-		$player->sendMessage(TextFormat::GREEN . "The data has been updated successfully!!!");
+		$player->sendMessage($t(LangKey::UPDATE_DATA->value));
 		Sound::addSound($player, SoundNames::GOOD_TONE->value);
-		$categoryManager->saveCategory($category);
+		$mgrCat->saveCategory($cat);
 	}
 }

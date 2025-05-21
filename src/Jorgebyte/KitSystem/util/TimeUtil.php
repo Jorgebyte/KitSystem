@@ -13,25 +13,36 @@ declare(strict_types=1);
 
 namespace Jorgebyte\KitSystem\util;
 
-use function floor;
+use function intdiv;
 use function max;
 use function time;
 
-class TimeUtil{
+/**
+ * Utility class for time formatting and cooldown handling.
+ */
+final class TimeUtil{
+
+	/**
+	 * Converts a duration in seconds into a human-readable format.
+	 * Example outputs: "45s", "2m 30s", "1h 15m"
+	 */
 	public static function formatTime(int $seconds) : string{
 		if($seconds < 60){
-			return $seconds . "s";
+			return "{$seconds}s";
 		} elseif($seconds < 3600){
-			$minutes = floor($seconds / 60);
+			$minutes = intdiv($seconds, 60);
 			$remainingSeconds = $seconds % 60;
-			return $minutes . "m " . $remainingSeconds . "s";
+			return "{$minutes}m {$remainingSeconds}s";
 		} else{
-			$hours = floor($seconds / 3600);
-			$remainingMinutes = floor(($seconds % 3600) / 60);
-			return $hours . "h " . $remainingMinutes . "m";
+			$hours = intdiv($seconds, 3600);
+			$remainingMinutes = intdiv($seconds % 3600, 60);
+			return "{$hours}h {$remainingMinutes}m";
 		}
 	}
 
+	/**
+	 * Returns a formatted string representing the remaining time until the given expiry timestamp.
+	 */
 	public static function formatCooldown(int $expiryTime) : string{
 		$remainingTime = $expiryTime - time();
 		return self::formatTime(max($remainingTime, 0));

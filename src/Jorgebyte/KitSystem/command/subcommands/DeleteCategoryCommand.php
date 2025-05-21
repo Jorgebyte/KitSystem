@@ -16,6 +16,7 @@ namespace Jorgebyte\KitSystem\command\subcommands;
 use CortexPE\Commando\BaseSubCommand;
 use CortexPE\Commando\constraint\InGameRequiredConstraint;
 use Jorgebyte\KitSystem\command\args\CategoryArgument;
+use Jorgebyte\KitSystem\form\ActionType;
 use Jorgebyte\KitSystem\form\FormManager;
 use Jorgebyte\KitSystem\form\FormTypes;
 use Jorgebyte\KitSystem\kit\category\Category;
@@ -41,6 +42,6 @@ class DeleteCategoryCommand extends BaseSubCommand{
 			FormManager::sendForm($sender, FormTypes::DELETE_CATEGORY_SUBFORM->value, [$category->getName()]);
 			return;
 		}
-		FormManager::sendForm($sender, FormTypes::SELECT_CATEGORY->value, ["deletecategory"]);
+		FormManager::sendForm($sender, FormTypes::SELECT_CATEGORY->value, [$sender, ActionType::DELETE_CATEGORY]);
 	}
 }

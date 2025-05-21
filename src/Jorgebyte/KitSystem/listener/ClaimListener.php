@@ -19,7 +19,10 @@ use Jorgebyte\KitSystem\util\PlayerUtil;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerInteractEvent;
 
-class ClaimListener implements Listener{
+/**
+ * Listener that handles claiming a kit from a custom chest item.
+ */
+final class ClaimListener implements Listener{
 	public function onPlayerInteract(PlayerInteractEvent $event) : void{
 		$player = $event->getPlayer();
 		$translator = Main::getInstance()->getTranslator();
@@ -45,6 +48,6 @@ class ClaimListener implements Listener{
 		$kitManager->giveKitItems($player, $kit);
 		$player->getInventory()->removeItem($item->setCount(1));
 		$player->sendMessage($translator->translate($player, LangKey::OPEN_KIT->value,
-			["{%kitname}" => $kitName]));
+			["%kitname%" => $kitName]));
 	}
 }

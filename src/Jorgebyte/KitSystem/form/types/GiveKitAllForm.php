@@ -18,69 +18,95 @@ use EasyUI\element\Option;
 use EasyUI\element\Slider;
 use EasyUI\utils\FormResponse;
 use EasyUI\variant\CustomForm;
+use IvanCraft623\languages\Translator;
 use Jorgebyte\KitSystem\Main;
 use Jorgebyte\KitSystem\util\LangKey;
 use Jorgebyte\KitSystem\util\PlayerUtil;
 use pocketmine\player\Player;
 use pocketmine\Server;
-use pocketmine\utils\TextFormat;
 
+/**
+ * Custom form to broadcast a kit to all online players.
+ * Supports chest delivery or direct inventory insertion.
+ */
 class GiveKitAllForm extends CustomForm{
-	public function __construct(){
-		parent::__construct("KitSystem - Give a Kit to All Players");
+	private Player $player;
+	private Translator $translator;
+	private \Closure $t;
+
+	public function __construct(Player $player){
+		$this->player = $player;
+		$this->translator = Main::getInstance()->getTranslator();
+		$this->t = function(string $key, array $r = []) : string{
+			return $this->translator->translate($this->player, $key, $r);
+		};
+		parent::__construct(
+			($this->t)(LangKey::TITLE_GIVE_KIT_ALL->value)
+		);
 	}
 
 	protected function onCreation() : void{
+		$t = $this->t;
 		$kitManager = Main::getInstance()->getKitManager();
-		$kits = $kitManager->getAllKits();
-		$dropdownKits = new Dropdown("Select a Kit");
-
-		foreach($kits as $kit){
-			$dropdownKits->addOption(new Option($kit->getName(), $kit->getName()));
+		$dropdown = new Dropdown($t(LangKey::LABEL_SELECT_KIT->value));
+		foreach($kitManager->getAllKits() as $kit){
+			$dropdown->addOption(new Option($kit->getName(), $kit->getName()));
 		}
-
-		$this->addElement("selectedKit", $dropdownKits);
-		$this->addElement("kitQuantity", new Slider("How many kits per player?", 1, 64, 1, 1));
+		$this->addElement("selectedKit", $dropdown);
+		$this->addElement("kitQuantity", new Slider(
+			$t(LangKey::LABEL_KIT_QUANTITY_PER_PLAYER->value),
+			1, 64, 1, 1
+		));
 	}
 
 	protected function onSubmit(Player $player, FormResponse $response) : void{
-		$selectedKitName = $response->getDropdownSubmittedOptionId("selectedKit");
+		$t = $this->t;
+		$translator = $this->translator;
 		$kitManager = Main::getInstance()->getKitManager();
-		$kit = $kitManager->getKit($selectedKitName);
 
+		$kitName = $response->getDropdownSubmittedOptionId("selectedKit");
+		$kit = $kitManager->getKit($kitName);
 		if($kit === null){
-			$player->sendMessage(TextFormat::RED . "ERROR: The selected kit does not exist.");
+			$player->sendMessage($t(LangKey::ERROR_KIT_NOT_EXIST->value));
 			return;
 		}
 
 		$quantity = (int) $response->getSliderSubmittedStep("kitQuantity");
 		$onlinePlayers = Server::getInstance()->getOnlinePlayers();
 
-		foreach($onlinePlayers as $targetPlayer){
-			if(!$kit->shouldStoreInChest() && !PlayerUtil::hasEnoughSpace($targetPlayer, $kit)){
-				$player->sendMessage(TextFormat::RED . "ERROR: " . $targetPlayer->getName() . " does not have enough space in their inventory.");
+		foreach($onlinePlayers as $target){
+			if(!$kit->shouldStoreInChest() && !PlayerUtil::hasEnoughSpace($target, $kit)){
+				$player->sendMessage($t(
+					LangKey::ERROR_INVENTORY_SPACE->value,
+					['%player%' => $target->getName()]
+				));
 				continue;
 			}
-
 			for($i = 0; $i < $quantity; $i++){
 				if($kit->shouldStoreInChest()){
-					$kitManager->giveKitChest($targetPlayer, $kit);
+					$kitManager->giveKitChest($target, $kit);
 				} else{
-					$kitManager->giveKitItems($targetPlayer, $kit);
+					$kitManager->giveKitItems($target, $kit);
 				}
 			}
 		}
-		$translator = Main::getInstance()->getTranslator();
-		$globalMessage = $translator->translate(
-			null,
-			LangKey::GIVEALL_KIT_BROADCAST->value,
-			[
-				'{%player}' => $player->getName(),
-				'{%quantity}' => (string) $quantity,
-				'{%kit}' => $kit->getName()
-			]
-		);
-		Server::getInstance()->broadcastMessage($globalMessage);
-		$player->sendMessage(TextFormat::GREEN . "Successfully gave " . $quantity . " kit(s) to all online players!");
+
+		foreach($onlinePlayers as $target){
+			$msg = $translator->translate(
+				$target,
+				LangKey::GIVEALL_KIT_BROADCAST->value,
+				[
+					'%player%' => $player->getName(),
+					'%quantity%' => (string) $quantity,
+					'%kit%' => $kit->getName()
+				]
+			);
+			$target->sendMessage($msg);
+		}
+
+		$player->sendMessage($t(
+			LangKey::GIVEALL_SUCCESS->value,
+			['%quantity%' => (string) $quantity]
+		));
 	}
 }

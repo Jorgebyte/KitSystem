@@ -32,6 +32,6 @@ class GiveAllKitCommand extends BaseSubCommand{
 
 	public function onRun(CommandSender $sender, string $aliasUsed, array $args) : void{
 		/** @var Player $sender */
-		FormManager::sendForm($sender, FormTypes::GIVEKITALL->value);
+		FormManager::sendForm($sender, FormTypes::GIVEKITALL->value, [$sender]);
 	}
 }

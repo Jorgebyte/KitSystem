@@ -18,10 +18,13 @@ use Jorgebyte\KitSystem\util\LangKey;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\Server;
-use pocketmine\utils\TextFormat;
 use function file_exists;
 use function is_string;
 
+/**
+ * Listener for player join events.
+ * Automatically gives a starter kit if enabled and player is new.
+ */
 class JoinListener implements Listener{
 	public function onPlayerJoin(PlayerJoinEvent $event) : void{
 		$player = $event->getPlayer();
@@ -50,12 +53,13 @@ class JoinListener implements Listener{
 
 		$starterKit = $kitManager->getKit($starterKitName);
 		if($starterKit === null){
-			$player->sendMessage(TextFormat::RED . "ERROR: Starter kit: " . $starterKitName . " is not available");
+			$player->sendMessage($translator->translate($player, LangKey::ERROR_KIT_INVALID->value,
+				["%kit%" => $starterKitName]));
 			return;
 		}
 
 		$kitManager->giveKitChest($player, $starterKit);
 		$player->sendMessage($translator->translate($player, LangKey::STARTERKIT_RECEIVED->value,
-		["{%kit}" => $starterKit->getPrefix()]));
+		["%kit%" => $starterKit->getPrefix()]));
 	}
 }

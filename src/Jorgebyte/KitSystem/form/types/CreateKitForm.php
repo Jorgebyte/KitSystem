@@ -20,77 +20,122 @@ use EasyUI\element\Toggle;
 use EasyUI\utils\FormResponse;
 use EasyUI\variant\CustomForm;
 use Exception;
+use IvanCraft623\languages\Translator;
 use Jorgebyte\KitSystem\Main;
+use Jorgebyte\KitSystem\util\LangKey;
 use Jorgebyte\KitSystem\util\Sound;
 use Jorgebyte\KitSystem\util\SoundNames;
 use pocketmine\player\Player;
-use pocketmine\utils\TextFormat;
+use function is_numeric;
+use function trim;
 
+/**
+ * Custom form that allows players to create a new kit from their inventory and armor.
+ */
 class CreateKitForm extends CustomForm{
-	public function __construct(){
-		parent::__construct("KitSystem - Create Kit");
+	private Player $player;
+	private Translator $translator;
+	private \Closure $t;
+
+	public function __construct(Player $player){
+		$this->player = $player;
+		$this->translator = Main::getInstance()->getTranslator();
+		$this->t = function(string $key, array $r = []) : string{
+			return $this->translator->translate($this->player, $key, $r);
+		};
+
+		parent::__construct(
+			($this->t)(LangKey::TITLE_CREATE_KIT->value)
+		);
 	}
 
 	public function onCreation() : void{
-		$this->addElement("kitName", new Input("Kit Name", null, "E.g. Warrior"));
-		$this->addElement("kitPrefix", new Input("Prefix", null, "E.g. [Warrior]"));
-		$this->addElement("cooldown", new Input("Cooldown (optional, in seconds)", null, "E.g. 3600"));
-		$this->addElement("price", new Input("Price (optional)", null, "E.g. 100"));
-		$this->addElement("permission", new Input("Permission (optional)", null, "E.g. kit.warrior.use"));
-		$this->addElement("icon", new Input("Icon URL (optional)", null, "https://example.com/icon.png"));
-		$this->addElement("storeInChest", new Toggle("Store in chest?", true));
-		$dropdownCategories = new Dropdown("Select Category (optional)");
-		$dropdownCategories->addOption(new Option("None", "None"));
-		$categories = Main::getInstance()->getCategoryManager()->getAllCategories();
+		$t = $this->t;
+		$this->addElement("kitName", new Input(
+			$t(LangKey::LABEL_KIT_NAME->value),
+			null,
+			$t(LangKey::PLACEHOLDER_KIT_NAME->value)
+		));
+		$this->addElement("kitPrefix", new Input(
+			$t(LangKey::LABEL_KIT_PREFIX->value),
+			null,
+			$t(LangKey::PLACEHOLDER_KIT_PREFIX->value)
+		));
+		$this->addElement("cooldown", new Input(
+			$t(LangKey::LABEL_COOLDOWN->value),
+			null,
+			$t(LangKey::PLACEHOLDER_COOLDOWN->value)
+		));
+		$this->addElement("price", new Input(
+			$t(LangKey::LABEL_PRICE->value),
+			null,
+			$t(LangKey::PLACEHOLDER_PRICE->value)
+		));
+		$this->addElement("permission", new Input(
+			$t(LangKey::LABEL_PERMISSION->value),
+			null,
+			$t(LangKey::PLACEHOLDER_PERMISSION->value)
+		));
+		$this->addElement("icon", new Input(
+			$t(LangKey::LABEL_ICON->value),
+			null,
+			$t(LangKey::PLACEHOLDER_ICON->value)
+		));
+		$this->addElement("storeInChest", new Toggle(
+			$t(LangKey::LABEL_STORE_IN_CHEST->value),
+			true
+		));
 
-		foreach($categories as $category){
-			$dropdownCategories->addOption(new Option($category->getName(), $category->getName()));
+		$dropdown = new Dropdown($t(LangKey::LABEL_SELECT_CATEGORY->value));
+		$dropdown->addOption(new Option("None", "None"));
+
+		foreach(Main::getInstance()->getCategoryManager()->getAllCategories() as $cat){
+			$dropdown->addOption(new Option($cat->getName(), $cat->getName()));
 		}
-		$this->addElement("selectedCategory", $dropdownCategories);
+		$this->addElement("selectedCategory", $dropdown);
 	}
 
 	protected function onSubmit(Player $player, FormResponse $response) : void{
-		$kitName = $response->getInputSubmittedText("kitName");
-		$kitPrefix = $response->getInputSubmittedText("kitPrefix");
-		$cooldown = $response->getInputSubmittedText("cooldown");
-		$price = $response->getInputSubmittedText("price");
-		$permission = $response->getInputSubmittedText("permission");
-		$icon = $response->getInputSubmittedText("icon");
-		$storeInChest = $response->getToggleSubmittedChoice("storeInChest");
-		$selectedCategory = $response->getDropdownSubmittedOptionId("selectedCategory");
-		$category = $selectedCategory !== "None" ? $selectedCategory : null;
+		$t = $this->t;
 
-		if($kitName === '' || $kitPrefix === ''){
-			$player->sendMessage(TextFormat::RED . "ERROR: The Kit Name and Prefix are REQUIRED!!!");
+		$name = $response->getInputSubmittedText("kitName");
+		$prefix = $response->getInputSubmittedText("kitPrefix");
+		$cdInput = $response->getInputSubmittedText("cooldown");
+		$prInput = $response->getInputSubmittedText("price");
+		$perm = trim($response->getInputSubmittedText("permission"));
+		$perm = $perm !== '' ? $perm : null;
+		$icon = trim($response->getInputSubmittedText("icon"));
+		$icon = $icon !== '' ? $icon : null;
+		$store = $response->getToggleSubmittedChoice("storeInChest");
+		$catSel = $response->getDropdownSubmittedOptionId("selectedCategory");
+		$cat = $catSel !== "None" ? $catSel : null;
+
+		if($name === "" || $prefix === ""){
+			$player->sendMessage($t(LangKey::ERROR_KIT_REQUIRED->value));
 			Sound::addSound($player, SoundNames::BAD_TONE->value);
 			return;
 		}
 
-		$cooldown = $cooldown === '' ? null : (int) $cooldown;
-		$price = $price === '' ? null : (float) $price;
-		$permission = $permission === '' ? null : $permission;
-		$icon = $icon === '' ? null : $icon;
-		$armorContents = $player->getArmorInventory()->getContents();
-		$inventoryContents = $player->getInventory()->getContents();
+		$cooldown = is_numeric($cdInput) ? (int) $cdInput : null;
+		$price = is_numeric($prInput) ? (float) $prInput : null;
+
+		$armor = $player->getArmorInventory()->getContents();
+		$inv = $player->getInventory()->getContents();
 
 		try{
 			Main::getInstance()->getKitManager()->createKit(
-				$kitName,
-				$kitPrefix,
-				$armorContents,
-				$inventoryContents,
-				$cooldown,
-				$price,
-				$permission,
-				$icon,
-				$storeInChest,
-				$category
+				$name, $prefix, $armor, $inv,
+				$cooldown, $price, $perm,
+				$icon, $store, $cat
 			);
-
-			$player->sendMessage(TextFormat::GREEN . "Kit: " . TextFormat::MINECOIN_GOLD . $kitName . TextFormat::GREEN . " created successfully!");
+			$player->sendMessage(
+				$t(LangKey::KIT_CREATED_SUCCESS->value, ['%kit%' => $name])
+			);
 			Sound::addSound($player, SoundNames::GOOD_TONE->value);
 		} catch(Exception $e){
-			$player->sendMessage(TextFormat::RED . "Error: " . $e->getMessage());
+			$player->sendMessage(
+				$t(LangKey::ERROR_GENERIC->value, ['%error%' => $e->getMessage()])
+			);
 			Sound::addSound($player, SoundNames::BAD_TONE->value);
 		}
 	}

@@ -15,8 +15,6 @@ namespace Jorgebyte\KitSystem;
 
 use CortexPE\Commando\exception\HookAlreadyRegistered;
 use CortexPE\Commando\PacketHooker;
-use DaPigGuy\libPiggyEconomy\exceptions\MissingProviderDependencyException;
-use DaPigGuy\libPiggyEconomy\exceptions\UnknownProviderException;
 use DaPigGuy\libPiggyEconomy\libPiggyEconomy;
 use DaPigGuy\libPiggyEconomy\providers\EconomyProvider;
 use Exception;
@@ -34,170 +32,226 @@ use pocketmine\utils\Config;
 use pocketmine\utils\SingletonTrait;
 use poggit\libasynql\DataConnector;
 use poggit\libasynql\libasynql;
+use function array_map;
+use function basename;
+use function glob;
 use function is_array;
+use function is_dir;
+use function parse_ini_file;
+use function pathinfo;
+use function scandir;
+use const DIRECTORY_SEPARATOR;
+use const INI_SCANNER_RAW;
+use const PATHINFO_EXTENSION;
 
+/**
+ * Main plugin class for KitSystem.
+ * Handles bootstrap of configuration, language, economy, managers, and events.
+ */
 final class Main extends PluginBase{
-    use SingletonTrait;
+	use SingletonTrait;
 
-    private const DEFAULT_LANGUAGE = "en_US";
+	private const DEFAULT_LANGUAGE = "en_US";
 
-    private DataConnector $database;
-    private KitManager $kitManager;
-    private CategoryManager $categoryManager;
-    private CooldownManager $cooldownManager;
-    private EconomyProvider $economyProvider;
-    private Config $config;
-    private Translator $translator;
+	private DataConnector $database;
+	private KitManager $kitManager;
+	private CategoryManager $categoryManager;
+	private CooldownManager $cooldownManager;
+	private EconomyProvider $economyProvider;
+	private Config $config;
+	private Translator $translator;
 
-    public function onLoad(): void {
-        self::setInstance($this);
-    }
+	public function onLoad() : void{
+		self::setInstance($this);
+	}
 
-    /**
-     * @throws UnknownProviderException
-     * @throws HookAlreadyRegistered
-     * @throws MissingProviderDependencyException
-     * @throws Exception
-     */
-    public function onEnable(): void {
-        $this->initializeHooks();
-        $this->saveResources();
-        $this->initializeConfig();
-        $this->loadTranslations();
-        $this->initializeDatabase();
-        $this->initializeManagers();
-        $this->registerCommandsAndEvents();
-    }
+	/**
+	 * Plugin startup sequence.
+	 *
+	 * @throws Exception
+	 */
+	public function onEnable() : void{
+		$this->initializeHooks();
+		$this->saveResources();
+		$this->initializeConfig();
+		$this->loadTranslations();
+		$this->initializeDatabase();
+		$this->initializeManagers();
+		$this->registerCommandsAndEvents();
+	}
 
+	/**
+	 * Registers any required hooks like PacketHooker and InvMenu.
+	 * @throws HookAlreadyRegistered
+	 */
+	private function initializeHooks() : void{
+		if(!PacketHooker::isRegistered()){
+			PacketHooker::register($this);
+		}
+		if(!InvMenuHandler::isRegistered()){
+			InvMenuHandler::register($this);
+		}
+	}
 
-    /**
-     * @throws HookAlreadyRegistered
-     */
-    private function initializeHooks(): void {
-        if (!PacketHooker::isRegistered()) {
-            PacketHooker::register($this);
-        }
-        if (!InvMenuHandler::isRegistered()) {
-            InvMenuHandler::register($this);
-        }
-    }
+	/**
+	 * Loads or generates the default config with fallback defaults.
+	 */
+	private function initializeConfig() : void{
+		$defaults = [
+			"default-language" => self::DEFAULT_LANGUAGE,
+			"database" => [
+				"type" => "sqlite",
+				"sqlite" => ["file" => "data.sqlite"],
+				"mysql" => [
+					"host" => "127.0.0.1",
+					"username" => "root",
+					"password" => "",
+					"schema" => "your_schema"
+				],
+				"worker-limit" => 1
+			],
+			"economy" => ["provider" => "bedrockeconomy"],
+			"chest-kit" => "chest",
+			"enable-starterkit" => false,
+			"starterkit" => "StarterKit"
+		];
 
-    private function initializeConfig(): void {
-        $defaults = [
-            "default-language" => self::DEFAULT_LANGUAGE,
-            "database" => [
-                "type" => "sqlite",
-                "sqlite" => ["file" => "data.sqlite"],
-                "mysql" => [
-                    "host" => "127.0.0.1",
-                    "username" => "root",
-                    "password" => "",
-                    "schema" => "your_schema"
-                ],
-                "worker-limit" => 1
-            ],
-            "economy" => ["provider" => "bedrockeconomy"],
-            "chest-kit" => "chest",
-            "enable-starterkit" => false,
-            "starterkit" => "StarterKit"
-        ];
+		$this->config = new Config($this->getDataFolder() . "config.yml", Config::YAML, $defaults);
+	}
 
-        $this->config = new Config($this->getDataFolder() . "config.yml", Config::YAML, $defaults);
-    }
+	/**
+	 * Initializes libasynql and runs schema setup.
+	 */
+	private function initializeDatabase() : void{
+		$this->database = libasynql::create(
+			$this,
+			$this->config->get("database"),
+			[
+				"sqlite" => "database/sqlite.sql",
+				"mysql" => "database/mysql.sql"
+			]
+		);
 
-    private function initializeDatabase(): void {
-        $this->database = libasynql::create(
-            $this,
-            $this->config->get("database"),
-            [
-                "sqlite" => "database/sqlite.sql",
-                "mysql" => "database/mysql.sql"
-            ]
-        );
+		foreach(["kits", "categories", "cooldowns", "category_kits"] as $table){
+			$this->database->executeGeneric("{$table}.table");
+		}
+	}
 
-        foreach (["kits", "categories", "cooldowns", "category_kits"] as $table) {
-            $this->database->executeGeneric("{$table}.table");
-        }
-    }
+	/**
+	 * Initializes core plugin managers and economy provider.
+	 *
+	 * @throws Exception
+	 */
+	private function initializeManagers() : void{
+		$this->kitManager = new KitManager();
+		$this->categoryManager = new CategoryManager();
+		$this->cooldownManager = new CooldownManager();
 
-    /**
-     * @throws UnknownProviderException
-     * @throws MissingProviderDependencyException
-     * @throws Exception
-     */
-    private function initializeManagers(): void {
-        try {
-            $this->kitManager = new KitManager();
-        } catch (Exception $e) {
-            $this->getLogger()->error($e->getMessage());
-        }
-        $this->categoryManager = new CategoryManager();
-        $this->cooldownManager = new CooldownManager();
+		libPiggyEconomy::init();
 
-        libPiggyEconomy::init();
-        $providerInfo = $this->config->get("economy");
-        if (!is_array($providerInfo)) {
-            throw new Exception("ERROR: Economy provider information must be an array in the configuration");
-        }
-        $this->economyProvider = libPiggyEconomy::getProvider($providerInfo);
-    }
+		$providerInfo = $this->config->get("economy");
+		if(!is_array($providerInfo)){
+			throw new \RuntimeException("Economy configuration must be an array.");
+		}
 
-    private function registerCommandsAndEvents(): void {
-        $this->getServer()->getCommandMap()->register("KitSystem", new KitSystemCommand($this));
-        $this->getServer()->getPluginManager()->registerEvents(new ClaimListener(), $this);
-        $this->getServer()->getPluginManager()->registerEvents(new JoinListener(), $this);
-    }
+		$this->economyProvider = libPiggyEconomy::getProvider($providerInfo);
+	}
 
-    /**
-     * @throws Exception
-     */
-    private function loadTranslations(): void {
-        $this->translator = new Translator($this);
-        foreach (glob($this->getDataFolder() . "languages" . DIRECTORY_SEPARATOR . "*.ini") as $file) {
-            $locale = basename($file, ".ini");
-            $content = parse_ini_file($file, false, INI_SCANNER_RAW);
-            if (!is_array($content)) {
-                throw new Exception("Missing or inaccessible required resource files");
-            }
-            $this->translator->registerLanguage(new Language($locale, array_map('stripcslashes', $content)));
-        }
-        $this->translator->setDefaultLanguage(
-            $this->translator->getLanguage($this->config->get("default-language", self::DEFAULT_LANGUAGE))
-        );
-    }
+	/**
+	 * Registers plugin commands and event listeners.
+	 */
+	private function registerCommandsAndEvents() : void{
+		$this->getServer()->getCommandMap()->register("KitSystem", new KitSystemCommand($this));
+		$this->getServer()->getPluginManager()->registerEvents(new ClaimListener(), $this);
+		$this->getServer()->getPluginManager()->registerEvents(new JoinListener(), $this);
+	}
 
-    public function saveResources(): void {
-        $this->saveResource("config.yml");
-        foreach (["en_US", "es_MX", "fr_FR", "id_ID", "it_IT", "ja_JP", "pt_BR"] as $lang) {
-            $this->saveResource("languages/{$lang}.ini", true);
-        }
-    }
+	/**
+	 * Loads all language translations from the /languages folder.
+	 *
+	 * @throws Exception
+	 */
+	private function loadTranslations() : void{
+		$this->translator = new Translator($this);
 
-    public function onDisable(): void {
-        if (isset($this->database)) $this->database->close();
-    }
+		$files = glob($this->getDataFolder() . "languages" . DIRECTORY_SEPARATOR . "*.ini");
+		if(!is_array($files)){
+			throw new \RuntimeException("Failed to read language directory");
+		}
 
-    public function getKitManager(): KitManager {
-        return $this->kitManager;
-    }
+		foreach($files as $file){
+			$locale = basename($file, ".ini");
+			$content = parse_ini_file($file, false, INI_SCANNER_RAW);
 
-    public function getCategoryManager(): CategoryManager {
-        return $this->categoryManager;
-    }
+			if(!is_array($content)){
+				throw new \RuntimeException("Invalid language file: {$file}");
+			}
 
-    public function getCooldownManager(): CooldownManager {
-        return $this->cooldownManager;
-    }
+			$this->translator->registerLanguage(new Language($locale, array_map('stripcslashes', $content)));
+		}
 
-    public function getEconomyProvider(): EconomyProvider {
-        return $this->economyProvider;
-    }
+		$defaultLocale = (string) $this->config->get("default-language", self::DEFAULT_LANGUAGE);
+		$defaultLang = $this->translator->getLanguage($defaultLocale);
 
-    public function getTranslator(): Translator {
-        return $this->translator;
-    }
+		if($defaultLang !== null){
+			$this->translator->setDefaultLanguage($defaultLang);
+		} else{
+			$this->getLogger()->warning("Default language '{$defaultLocale}' not found");
+		}
+	}
 
-    public function getDatabase(): DataConnector {
-        return $this->database;
-    }
+	/**
+	 * Saves default plugin resources like config and language files.
+	 */
+	public function saveResources() : void{
+		$this->saveResource("config.yml");
+
+		$languageDir = $this->getFile() . "resources" . DIRECTORY_SEPARATOR . "languages";
+		if(!is_dir($languageDir)){
+			$this->getLogger()->warning("No language resource directory found");
+			return;
+		}
+
+		$resourceLanguages = scandir($languageDir);
+		if(!is_array($resourceLanguages)){
+			$this->getLogger()->warning("Failed to read language resource directory");
+			return;
+		}
+
+		foreach($resourceLanguages as $file){
+			if(pathinfo($file, PATHINFO_EXTENSION) !== "ini")continue;
+
+			$this->saveResource("languages/" . $file, true);
+		}
+	}
+
+	public function onDisable() : void{
+		if(isset($this->database))$this->database->close();
+	}
+
+	// Accessors
+
+	public function getKitManager() : KitManager{
+		return $this->kitManager;
+	}
+
+	public function getCategoryManager() : CategoryManager{
+		return $this->categoryManager;
+	}
+
+	public function getCooldownManager() : CooldownManager{
+		return $this->cooldownManager;
+	}
+
+	public function getEconomyProvider() : EconomyProvider{
+		return $this->economyProvider;
+	}
+
+	public function getTranslator() : Translator{
+		return $this->translator;
+	}
+
+	public function getDatabase() : DataConnector{
+		return $this->database;
+	}
 }

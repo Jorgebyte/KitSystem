@@ -104,6 +104,7 @@ final class Kit{
 
 	public function canUseKit(Player $player) : bool{
 		return $this->permission === null ||
+			$this->permission === "default" ||
 			$player->hasPermission($this->permission) ||
 			$player->hasPermission(DefaultPermissions::ROOT_OPERATOR);
 	}

@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace Jorgebyte\KitSystem\util;
 
+/*
+ * Enumeration representing the types of sounds.
+ */
 enum SoundNames : string{
 	case OPEN_FORM = 'random.pop2';
 	case OPEN_MENU = 'bubble.pop';

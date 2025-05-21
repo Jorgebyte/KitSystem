@@ -28,7 +28,11 @@ use pocketmine\item\VanillaItems;
 use pocketmine\utils\TextFormat;
 use function in_array;
 
-class EditKitMenu extends InvMenu{
+/**
+ * InvMenu used to edit a kit's contents (inventory and armor).
+ */
+final class EditKitMenu extends InvMenu{
+
 	protected string $kitName;
 
 	public function __construct(string $kitName){
@@ -37,77 +41,78 @@ class EditKitMenu extends InvMenu{
 		$this->setName("Editing Kit: " . $kitName);
 
 		$kit = Main::getInstance()->getKitManager()->getKit($this->kitName);
-		if($kit === null){
-			return;
-		}
+		if($kit === null)return;
 
 		$inventory = $this->getInventory();
 		$redGlass = VanillaBlocks::STAINED_GLASS_PANE()->setColor(DyeColor::RED())->asItem()->setCustomName("");
 
+		// Fill kit items
 		foreach($kit->getItems() as $slot => $item){
 			$inventory->setItem($slot, $item);
 		}
 
-		for($i = 37; $i <= 40; $i++){
-			$inventory->setItem($i, $redGlass);
-		}
-
-		$armorItems = $kit->getArmor();
+		// Fill armor slots
 		$armorSlots = [47, 48, 49, 50];
-		foreach($armorItems as $i => $armorItem){
+		foreach($kit->getArmor() as $i => $armorItem){
 			if(isset($armorSlots[$i])){
 				$inventory->setItem($armorSlots[$i], $armorItem);
 			}
 		}
 
-		$confirmBlock = VanillaBlocks::EMERALD()->asItem()->setCustomName(TextFormat::GREEN . "UPDATE");
-		$inventory->setItem(40, $confirmBlock);
+		// Confirm action
+		$confirm = VanillaBlocks::EMERALD()->asItem()->setCustomName(TextFormat::GREEN . "UPDATE");
+		$inventory->setItem(40, $confirm);
 
+		// Fill borders
 		for($i = 36; $i < 54; $i++){
-			if(!in_array($i, [40, 47, 48, 49, 50], true) && $inventory->getItem($i)->isNull()){
-				$inventory->setItem($i, $redGlass);
+			if(!in_array($i, [40, ...$armorSlots], true) && $inventory->getItem($i)->isNull()){
+				$inventory->setItem($i, clone $redGlass);
 			}
 		}
 
 		$this->setListener(function (InvMenuTransaction $transaction) : InvMenuTransactionResult{
 			$player = $transaction->getPlayer();
-			$clickedItem = $transaction->getItemClicked();
+			$item = $transaction->getItemClicked();
+			$inventory = $transaction->getAction()->getInventory();
 
 			$redGlass = VanillaBlocks::STAINED_GLASS_PANE()->setColor(DyeColor::RED())->asItem();
-			if($clickedItem->equals($redGlass)){
+			$confirm = VanillaBlocks::EMERALD()->asItem()->setCustomName(TextFormat::GREEN . "UPDATE");
+
+			if($item->equals($redGlass)){
 				Sound::addSound($player, SoundNames::BAD_TONE->value);
 				return $transaction->discard();
 			}
 
-			if($clickedItem->equals(VanillaBlocks::EMERALD()->asItem()->setCustomName(TextFormat::GREEN . "UPDATE"))){
-				$inventory = $transaction->getAction()->getInventory();
+			if($item->equals($confirm)){
 				$newItems = [];
 				for($i = 0; $i < 36; $i++){
-					$item = $inventory->getItem($i);
-					if(!$item->equals(VanillaItems::AIR())){
-						$newItems[$i] = $item;
+					$currentItem = $inventory->getItem($i);
+					if(!$currentItem->equals(VanillaItems::AIR())){
+						$newItems[$i] = $currentItem;
 					}
 				}
 
 				$newArmor = [];
 				for($i = 47; $i <= 50; $i++){
-					$armorItem = $inventory->getItem($i);
-					if(!$armorItem->equals(VanillaItems::AIR())){
-						$newArmor[] = $armorItem;
+					$currentItem = $inventory->getItem($i);
+					if(!$currentItem->equals(VanillaItems::AIR())){
+						$newArmor[] = $currentItem;
 					}
 				}
+
 				$kit = Main::getInstance()->getKitManager()->getKit($this->kitName);
-				$translator = Main::getInstance()->getTranslator();
 				if($kit !== null){
 					$kit->setItems($newItems);
 					$kit->setArmor($newArmor);
 					Main::getInstance()->getKitManager()->saveKit($kit);
-					$player->sendMessage($translator->translate($player, LangKey::KIT_UPDATE->value));
+
+					$player->sendMessage(Main::getInstance()->getTranslator()->translate($player, LangKey::KIT_UPDATE->value));
 					Sound::addSound($player, SoundNames::GOOD_TONE->value);
 					$this->onClose($player);
 				}
 				return $transaction->discard();
 			}
+
 			return $transaction->continue();
 		});
 	}

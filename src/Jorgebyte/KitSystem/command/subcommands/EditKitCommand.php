@@ -16,6 +16,7 @@ namespace Jorgebyte\KitSystem\command\subcommands;
 use CortexPE\Commando\BaseSubCommand;
 use CortexPE\Commando\constraint\InGameRequiredConstraint;
 use Jorgebyte\KitSystem\command\args\KitArgument;
+use Jorgebyte\KitSystem\form\ActionType;
 use Jorgebyte\KitSystem\form\FormManager;
 use Jorgebyte\KitSystem\form\FormTypes;
 use Jorgebyte\KitSystem\kit\Kit;
@@ -38,9 +39,9 @@ class EditKitCommand extends BaseSubCommand{
 		if(isset($args["kit"])){
 			/** @var Kit $kit */
 			$kit = $args["kit"];
-			FormManager::sendForm($sender, FormTypes::WHAT_TO_EDIT_SUBFORM->value, [$kit->getName()]);
+			FormManager::sendForm($sender, FormTypes::WHAT_TO_EDIT_SUBFORM->value, [$sender, $kit->getName()]);
 			return;
 		}
-		FormManager::sendForm($sender, FormTypes::SELECT_KIT->value, ["editkit"]);
+		FormManager::sendForm($sender, FormTypes::SELECT_KIT->value, [$sender, ActionType::EDIT_KIT]);
 	}
 }
