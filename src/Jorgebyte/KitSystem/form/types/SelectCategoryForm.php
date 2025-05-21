@@ -65,10 +65,10 @@ class SelectCategoryForm extends SimpleForm{
 
 		foreach($categories as $cat){
 			$button = new Button($cat->getPrefix());
-            $icon = ResolveIcon::resolveIcon($cat->getIcon());
-            if ($icon !== null) {
-                $button->setIcon($icon);
-            }
+			$icon = ResolveIcon::resolveIcon($cat->getIcon());
+			if($icon !== null){
+				$button->setIcon($icon);
+			}
 
 			$button->setSubmitListener(function (Player $player) use ($cat) : void{
 				switch($this->args){

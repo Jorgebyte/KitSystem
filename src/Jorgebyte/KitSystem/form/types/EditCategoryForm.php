@@ -95,15 +95,15 @@ class EditCategoryForm extends CustomForm{
 		$cat = $mgrCat->getCategory($this->categoryName);
 		if($cat === null)return;
 
-        $prefix = $response->getInputSubmittedText("categoryPrefix");
-        $permissionText = $response->getInputSubmittedText("categoryPermission");
-        $iconText = $response->getInputSubmittedText("categoryIcon");
-        $toAdd = $response->getDropdownSubmittedOptionId("addKit");
-        $toRemove = $response->getDropdownSubmittedOptionId("removeKit");
+		$prefix = $response->getInputSubmittedText("categoryPrefix");
+		$permissionText = $response->getInputSubmittedText("categoryPermission");
+		$iconText = $response->getInputSubmittedText("categoryIcon");
+		$toAdd = $response->getDropdownSubmittedOptionId("addKit");
+		$toRemove = $response->getDropdownSubmittedOptionId("removeKit");
 
-        $cat->setPrefix($prefix);
-        $cat->setPermission($permissionText !== '' ? $permissionText : null);
-        $cat->setIcon($iconText !== '' ? $iconText : null);
+		$cat->setPrefix($prefix);
+		$cat->setPermission($permissionText !== '' ? $permissionText : null);
+		$cat->setIcon($iconText !== '' ? $iconText : null);
 
 		if($toAdd !== "None" && ($kit = $mgrKit->getKit($toAdd)) !== null){
 			$cat->addKit($kit);

@@ -34,10 +34,10 @@ final class ResolveIcon{
 
 		$address = trim($address);
 
-        if (preg_match('#^https?://#i', $address) === 1) {
-            return new ButtonIcon($address, ButtonIcon::TYPE_URL);
-        }
+		if(preg_match('#^https?://#i', $address) === 1){
+			return new ButtonIcon($address, ButtonIcon::TYPE_URL);
+		}
 
-        return new ButtonIcon($address, ButtonIcon::TYPE_PATH);
+		return new ButtonIcon($address, ButtonIcon::TYPE_PATH);
 	}
 }

@@ -80,12 +80,12 @@ class CategoryForm extends SimpleForm{
 			}
 
 			$button = new Button($label);
-            $icon = ResolveIcon::resolveIcon($kit->getIcon());
-            if ($icon !== null) {
-                $button->setIcon($icon);
-            }
+			$icon = ResolveIcon::resolveIcon($kit->getIcon());
+			if($icon !== null){
+				$button->setIcon($icon);
+			}
 
-            $button->setSubmitListener(function() use ($kit, $t, $economyProvider, $name, $price) : void{
+			$button->setSubmitListener(function() use ($kit, $t, $economyProvider, $name, $price) : void{
 				$current = Main::getInstance()->getCooldownManager()->getCooldown($this->player, $name);
 				if($current !== null){
 					$this->player->sendMessage($t(

@@ -82,34 +82,34 @@ class EditKitDataForm extends CustomForm{
 		));
 	}
 
-    protected function onSubmit(Player $player, FormResponse $response) : void{
-        $t = $this->t;
-        $kit = Main::getInstance()->getKitManager()->getKit($this->kitName);
-        if($kit === null) return;
+	protected function onSubmit(Player $player, FormResponse $response) : void{
+		$t = $this->t;
+		$kit = Main::getInstance()->getKitManager()->getKit($this->kitName);
+		if($kit === null)return;
 
-        $prefix = $response->getInputSubmittedText("kitPrefix");
-        $cdInput = $response->getInputSubmittedText("cooldown");
-        $prInput = $response->getInputSubmittedText("price");
-        $permissionText = $response->getInputSubmittedText("permission");
-        $iconText = $response->getInputSubmittedText("icon");
-        $storeInChest = $response->getToggleSubmittedChoice("storeInChest");
+		$prefix = $response->getInputSubmittedText("kitPrefix");
+		$cdInput = $response->getInputSubmittedText("cooldown");
+		$prInput = $response->getInputSubmittedText("price");
+		$permissionText = $response->getInputSubmittedText("permission");
+		$iconText = $response->getInputSubmittedText("icon");
+		$storeInChest = $response->getToggleSubmittedChoice("storeInChest");
 
-        if($prefix === ""){
-            $player->sendMessage($t(LangKey::ERROR_KIT_REQUIRED->value));
-            Sound::addSound($player, SoundNames::BAD_TONE->value);
-            return;
-        }
+		if($prefix === ""){
+			$player->sendMessage($t(LangKey::ERROR_KIT_REQUIRED->value));
+			Sound::addSound($player, SoundNames::BAD_TONE->value);
+			return;
+		}
 
-        $kit->setPrefix($prefix);
-        $kit->setCooldown(is_numeric($cdInput) ? (int) $cdInput : null);
-        $kit->setPrice(is_numeric($prInput) ? (float) $prInput : null);
-        $kit->setPermission($permissionText !== '' ? $permissionText : null);
-        $kit->setIcon($iconText !== '' ? $iconText : null);
-        $kit->setStoreInChest($storeInChest);
+		$kit->setPrefix($prefix);
+		$kit->setCooldown(is_numeric($cdInput) ? (int) $cdInput : null);
+		$kit->setPrice(is_numeric($prInput) ? (float) $prInput : null);
+		$kit->setPermission($permissionText !== '' ? $permissionText : null);
+		$kit->setIcon($iconText !== '' ? $iconText : null);
+		$kit->setStoreInChest($storeInChest);
 
-        Main::getInstance()->getKitManager()->saveKit($kit);
+		Main::getInstance()->getKitManager()->saveKit($kit);
 
-        $player->sendMessage($t(LangKey::KIT_UPDATE->value));
-        Sound::addSound($player, SoundNames::GOOD_TONE->value);
-    }
+		$player->sendMessage($t(LangKey::KIT_UPDATE->value));
+		Sound::addSound($player, SoundNames::GOOD_TONE->value);
+	}
 }

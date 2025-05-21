@@ -27,6 +27,7 @@ use Jorgebyte\KitSystem\util\Sound;
 use Jorgebyte\KitSystem\util\SoundNames;
 use pocketmine\player\Player;
 use function is_numeric;
+use function trim;
 
 /**
  * Custom form that allows players to create a new kit from their inventory and armor.
@@ -101,11 +102,11 @@ class CreateKitForm extends CustomForm{
 		$prefix = $response->getInputSubmittedText("kitPrefix");
 		$cdInput = $response->getInputSubmittedText("cooldown");
 		$prInput = $response->getInputSubmittedText("price");
-        $perm = trim($response->getInputSubmittedText("permission"));
-        $perm = $perm !== '' ? $perm : null;
-        $icon = trim($response->getInputSubmittedText("icon"));
-        $icon = $icon !== '' ? $icon : null;
-        $store = $response->getToggleSubmittedChoice("storeInChest");
+		$perm = trim($response->getInputSubmittedText("permission"));
+		$perm = $perm !== '' ? $perm : null;
+		$icon = trim($response->getInputSubmittedText("icon"));
+		$icon = $icon !== '' ? $icon : null;
+		$store = $response->getToggleSubmittedChoice("storeInChest");
 		$catSel = $response->getDropdownSubmittedOptionId("selectedCategory");
 		$cat = $catSel !== "None" ? $catSel : null;
 
