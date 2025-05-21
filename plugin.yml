@@ -1,6 +1,6 @@
 name: KitSystem
 api: 5.3.0
-version: 1.0.3
+version: 1.0.4
 author: Jorgebyte
 
 main: Jorgebyte\KitSystem\Main
