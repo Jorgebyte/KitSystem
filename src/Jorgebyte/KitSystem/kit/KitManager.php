@@ -27,17 +27,29 @@ use RuntimeException;
 use function array_values;
 use function is_string;
 
+/**
+ * Manages the creation, storage, and retrieval of kits.
+ * Handles data persistence and player kit distribution.
+ */
 final class KitManager{
-	/** @var array<string, Kit> */
+	/** @var array<string, Kit> In-memory cache of all registered kits. */
 	private array $kits = [];
 
 	/**
+	 * KitManager constructor.
+	 *
+	 * Loads all kits asynchronously on startup.
+	 *
 	 * @throws RuntimeException|Exception
 	 */
 	public function __construct(){
 		$this->loadKits();
 	}
 
+	/**
+	 * Registers a new kit to the system and persists it.
+	 * Optionally associates it with a category.
+	 */
 	public function addKit(Kit $kit, ?Category $category = null) : void{
 		$this->kits[$kit->getName()] = $kit;
 		if($category !== null){
@@ -50,13 +62,19 @@ final class KitManager{
 				]
 			);
 		}
-		$this->persistKit($kit);
+		$this->saveKit($kit);
 	}
 
+	/**
+	 * Retrieves a registered kit by name.
+	 */
 	public function getKit(string $name) : ?Kit{
 		return $this->kits[$name] ?? null;
 	}
 
+	/**
+	 * Deletes a kit and removes it from its category if necessary.
+	 */
 	public function deleteKit(string $name) : void{
 		foreach(Main::getInstance()->getCategoryManager()->getAllCategories() as $category){
 			if($category->hasKit($name)){
@@ -72,7 +90,9 @@ final class KitManager{
 	}
 
 	/**
-	 * @throws RuntimeException|Exception If kit already exists
+	 * Creates and registers a new kit. Throws if a kit with the same name already exists.
+	 *
+	 * @throws RuntimeException|Exception
 	 */
 	public function createKit(
 		string $name,
@@ -106,6 +126,9 @@ final class KitManager{
 		}
 	}
 
+	/**
+	 * Gives a kit to a player in the form of a chest item.
+	 */
 	public function giveKitChest(Player $player, Kit $kit) : void{
 		$config = Main::getInstance()->getConfig();
 		$translator = Main::getInstance()->getTranslator();
@@ -127,6 +150,9 @@ final class KitManager{
 		$this->distributeItemSafely($player, $item, LangKey::FULL_INV_CHEST->value);
 	}
 
+	/**
+	 * Gives the kit's items and armor directly to a player's inventory.
+	 */
 	public function giveKitItems(Player $player, Kit $kit) : void{
 		$inventory = $player->getInventory();
 		$armorInventory = $player->getArmorInventory();
@@ -144,6 +170,11 @@ final class KitManager{
 		}
 	}
 
+	/**
+	 * Loads all kits asynchronously from the database into memory.
+	 *
+	 * @return Promise<array<string, Kit>>
+	 */
 	public function loadKits() : Promise{
 		$resolver = new PromiseResolver();
 
@@ -156,25 +187,32 @@ final class KitManager{
 
 		return $resolver->getPromise();
 	}
-
+	/**
+	 * Saves a kit's current state to the database.
+	 */
 	public function saveKit(Kit $kit) : void{
-		$data = $this->serializeKit($kit);
-		Main::getInstance()->getDatabase()->executeChange("kits.insert", $data);
-	}
-
-	private function persistKit(Kit $kit) : void{
 		Main::getInstance()->getDatabase()->executeChange('kits.insert', $this->serializeKit($kit));
 	}
 
-	/** @return array<Kit> */
+	/**
+	 * Gets all registered kits.
+	 *
+	 * @return Kit[]
+	 */
 	public function getAllKits() : array{
 		return array_values($this->kits);
 	}
 
+	/**
+	 * Checks whether a kit exists by name.
+	 */
 	public function kitExists(string $name) : bool{
 		return isset($this->kits[$name]);
 	}
 
+	/**
+	 * Attempts to add an item to a player's inventory or drops it if full.
+	 */
 	private function distributeItemSafely(Player $player, Item $item, string $messageKey) : void{
 		$inventory = $player->getInventory();
 		$translator = Main::getInstance()->getTranslator();
@@ -187,6 +225,9 @@ final class KitManager{
 		}
 	}
 
+	/**
+	 * Converts a Kit object into a serializable array for database storage.
+	 */
 	private function serializeKit(Kit $kit) : array{
 		return [
 			'name' => $kit->getName(),
@@ -201,6 +242,9 @@ final class KitManager{
 		];
 	}
 
+	/**
+	 * Reconstructs a Kit object from database row data.
+	 */
 	private function deserializeKit(array $data) : Kit{
 		return new Kit(
 			$data['name'],

@@ -25,6 +25,10 @@ use Jorgebyte\KitSystem\util\PlayerUtil;
 use pocketmine\player\Player;
 use pocketmine\Server;
 
+/**
+ * Custom form to give a kit to a specific online player.
+ * Allows kit selection, quantity, and validates space/inventory.
+ */
 class GiveKitForm extends CustomForm{
 	private Player $player;
 	private Translator $translator;

@@ -22,6 +22,12 @@ use Jorgebyte\KitSystem\util\Sound;
 use Jorgebyte\KitSystem\util\SoundNames;
 use pocketmine\player\Player;
 
+/**
+ * Modal confirmation form used to delete a category.
+ *
+ * If accepted, the category and its associated kits (if any) will be detached and removed from the database.
+ * Triggered by {@see SelectCategoryForm} with ActionType::DELETE_CATEGORY.
+ */
 class DeleteCategorySubForm extends ModalForm{
 	private Player $player;
 	private string $categoryName;

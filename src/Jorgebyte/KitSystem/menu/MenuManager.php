@@ -25,17 +25,33 @@ use pocketmine\utils\TextFormat;
 use Throwable;
 use function is_subclass_of;
 
+/**
+ * Handles the mapping and dispatching of inventory-based menus (InvMenu).
+ * Uses enum-based keys to dynamically load and present custom menu UIs.
+ */
 class MenuManager{
+
+	/** @var array<string, class-string<InvMenu>> Maps menu types to their corresponding InvMenu classes */
 	private static array $menuMap = [
 		MenuTypes::EDIT_KIT->value => EditKitMenu::class,
 		MenuTypes::PREVIEW_KIT->value => PreviewKitMenu::class,
 	];
 
+	/**
+	 * Sends an InvMenu to the player along with a UI open sound.
+	 */
 	private static function sendMenuWithSound(Player $player, InvMenu $menu) : void{
 		Sound::addSound($player, SoundNames::OPEN_MENU->value);
 		$menu->send($player);
 	}
 
+	/**
+	 * Instantiates and sends an InvMenu based on a defined type.
+	 * Automatically plays sound and handles exceptions gracefully.
+	 *
+	 * @param string $menuType One of the MenuTypes enum values
+	 * @param array  $args     Constructor arguments for the target menu
+	 */
 	public static function sendMenu(Player $player, string $menuType, array $args = []) : void{
 		if(!isset(self::$menuMap[$menuType])){
 			throw new InvalidArgumentException("ERROR: Menu type " . $menuType . " is not recognized");

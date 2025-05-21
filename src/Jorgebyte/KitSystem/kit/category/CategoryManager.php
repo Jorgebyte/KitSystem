@@ -18,25 +18,40 @@ use Jorgebyte\KitSystem\Main;
 use RuntimeException;
 use function array_values;
 
+/**
+ * Responsible for managing all category instances.
+ * Handles creation, deletion, persistence, and kit assignments to categories.
+ */
 final class CategoryManager{
-	/** @var array<string, Category> */
+	/** @var array<string, Category> Associative map of category name => Category instance */
 	private array $categories = [];
 
+	/**
+	 * Initializes the category manager by loading categories from the database.
+	 */
 	public function __construct(){
 		$this->loadCategories();
 	}
 
+	/**
+	 * Adds a category to the internal cache and persists it to the database.
+	 */
 	public function addCategory(Category $category) : void{
 		$this->categories[$category->getName()] = $category;
 		$this->persistCategory($category);
 	}
 
+	/**
+	 * Checks whether a category with the given name exists.
+	 */
 	public function categoryExists(string $name) : bool{
 		return isset($this->categories[$name]);
 	}
 
 	/**
-	 * @throws RuntimeException If category already exists
+	 * Creates a new category and registers it.
+	 *
+	 * @throws RuntimeException If the category already exists
 	 */
 	public function createCategory(string $name, string $prefix, ?string $permission = null, ?string $icon = null) : void{
 		if($this->categoryExists($name)){
@@ -48,7 +63,9 @@ final class CategoryManager{
 	}
 
 	/**
-	 * @throws RuntimeException If category doesn't exist
+	 * Adds a kit to a category by name.
+	 *
+	 * @throws RuntimeException If the category does not exist
 	 */
 	public function addKitToCategory(Kit $kit, string $categoryName) : void{
 		$category = $this->getCategory($categoryName) ?? throw new RuntimeException("Category '$categoryName' not found");
@@ -64,10 +81,18 @@ final class CategoryManager{
 		);
 	}
 
+	/**
+	 * Retrieves a category by name.
+	 */
 	public function getCategory(string $name) : ?Category{
 		return $this->categories[$name] ?? null;
 	}
 
+	/**
+	 * Retrieves all kits associated with a specific category.
+	 *
+	 * @return Kit[]
+	 */
 	public function getKitsByCategory(string $categoryName) : array{
 		if(!isset($this->categories[$categoryName])){
 			return [];
@@ -77,13 +102,19 @@ final class CategoryManager{
 		return $category->getKits();
 	}
 
-	/** @return array<Category> */
+	/**
+	 * Returns all categories currently loaded.
+	 *
+	 * @return Category[]
+	 */
 	public function getAllCategories() : array{
 		return array_values($this->categories);
 	}
 
 	/**
-	 * @throws RuntimeException If category doesn't exist
+	 * Deletes a category and removes it from the internal cache and database.
+	 *
+	 * @throws RuntimeException If the category does not exist
 	 */
 	public function deleteCategory(string $name) : void{
 		if(!isset($this->categories[$name])){
@@ -94,6 +125,9 @@ final class CategoryManager{
 		Main::getInstance()->getDatabase()->executeChange('categories.delete', ['name' => $name]);
 	}
 
+	/**
+	 * Persists a single category (without kits) to the database.
+	 */
 	public function persistCategory(Category $category) : void{
 		Main::getInstance()->getDatabase()->executeChange('categories.insert', [
 			'name' => $category->getName(),
@@ -103,14 +137,12 @@ final class CategoryManager{
 		]);
 	}
 
+	/**
+	 * Saves a full category definition including all assigned kits to the database.
+	 */
 	public function saveCategory(Category $category) : void{
-		$data = [
-			'name' => $category->getName(),
-			'prefix' => $category->getPrefix(),
-			'permission' => $category->getPermission(),
-			'icon' => $category->getIcon()
-		];
-		Main::getInstance()->getDatabase()->executeChange('categories.insert', $data);
+		$this->persistCategory($category);
+
 		foreach($category->getKits() as $kit){
 			Main::getInstance()->getDatabase()->executeChange('category_kits.insert', [
 				'category_name' => $category->getName(),
@@ -119,6 +151,10 @@ final class CategoryManager{
 		}
 	}
 
+	/**
+	 * Loads all categories and their assigned kits from the database.
+	 * Executes in two steps: category metadata and then category-kit bindings.
+	 */
 	private function loadCategories() : void{
 		Main::getInstance()->getDatabase()->executeSelect('categories.get_all', [], function(array $rows) : void{
 			$categoryMap = [];

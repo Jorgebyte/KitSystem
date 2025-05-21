@@ -19,7 +19,10 @@ use Jorgebyte\KitSystem\util\PlayerUtil;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerInteractEvent;
 
-class ClaimListener implements Listener{
+/**
+ * Listener that handles claiming a kit from a custom chest item.
+ */
+final class ClaimListener implements Listener{
 	public function onPlayerInteract(PlayerInteractEvent $event) : void{
 		$player = $event->getPlayer();
 		$translator = Main::getInstance()->getTranslator();

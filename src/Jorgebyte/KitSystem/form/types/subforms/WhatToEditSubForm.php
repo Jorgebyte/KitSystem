@@ -24,6 +24,11 @@ use Jorgebyte\KitSystem\menu\MenuTypes;
 use Jorgebyte\KitSystem\util\LangKey;
 use pocketmine\player\Player;
 
+/**
+ * Form that lets the user decide whether to edit the items or metadata of a kit.
+ *
+ * This is part of the kit editing flow, invoked from {@see SelectKitForm} when editing.
+ */
 class WhatToEditSubForm extends SimpleForm{
 	private Player $player;
 	private string $kitName;

@@ -22,6 +22,14 @@ use Jorgebyte\KitSystem\util\Sound;
 use Jorgebyte\KitSystem\util\SoundNames;
 use pocketmine\player\Player;
 
+/**
+ * Modal confirmation form used to delete a kit.
+ *
+ * If accepted, the kit will be permanently removed.
+ * If denied, a cancel message is shown.
+ *
+ * Triggered by {@see SelectKitForm} with ActionType::DELETE_KIT.
+ */
 class DeleteKitSubForm extends ModalForm{
 	private Player $player;
 	private string $kitName;

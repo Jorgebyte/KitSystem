@@ -17,15 +17,26 @@ use Jorgebyte\KitSystem\Main;
 use pocketmine\player\Player;
 use function time;
 
+/**
+ * Handles cooldown logic for kits per player.
+ * Responsible for setting, retrieving, clearing, and loading cooldowns.
+ */
 final class CooldownManager{
 
-	/** @var array<string, array<string, int>> */
+	/** @var array<string, array<string, int>> In-memory cooldown data (uuid => [kit => expiryTimestamp]) */
 	private array $cooldowns = [];
 
+	/**
+	 * Initializes the cooldown manager and loads saved cooldowns from the database.
+	 */
 	public function __construct(){
 		$this->loadCooldowns();
 	}
 
+	/**
+	 * Sets a cooldown for a specific kit and player.
+	 * Also persists it to the database.
+	 */
 	public function setCooldown(Player $player, string $kitName, int $cooldownSeconds) : void{
 		$uuid = $player->getUniqueId()->toString();
 		$expiryTime = time() + $cooldownSeconds;
@@ -39,6 +50,11 @@ final class CooldownManager{
 		}
 	}
 
+	/**
+	 * Gets the active cooldown expiry timestamp for the player and kit.
+	 *
+	 * @return int|null Null if no cooldown is active or expired
+	 */
 	public function getCooldown(Player $player, string $kitName) : ?int{
 		$uuid = $player->getUniqueId()->toString();
 		if(isset($this->cooldowns[$uuid][$kitName])){
@@ -51,6 +67,9 @@ final class CooldownManager{
 		return null;
 	}
 
+	/**
+	 * Clears the cooldown for a specific player and kit.
+	 */
 	private function clearCooldown(Player $player, string $kitName) : void{
 		$uuid = $player->getUniqueId()->toString();
 		unset($this->cooldowns[$uuid][$kitName]);
@@ -60,6 +79,9 @@ final class CooldownManager{
 		]);
 	}
 
+	/**
+	 * Loads all active (non-expired) cooldowns from the database into memory.
+	 */
 	private function loadCooldowns() : void{
 		Main::getInstance()->getDatabase()->executeSelect("cooldowns.get_all", [], function(array $rows) : void{
 			foreach($rows as $row){

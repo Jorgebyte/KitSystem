@@ -16,6 +16,7 @@ namespace Jorgebyte\KitSystem\command\subcommands;
 use CortexPE\Commando\BaseSubCommand;
 use CortexPE\Commando\constraint\InGameRequiredConstraint;
 use Jorgebyte\KitSystem\command\args\KitArgument;
+use Jorgebyte\KitSystem\form\ActionType;
 use Jorgebyte\KitSystem\form\FormManager;
 use Jorgebyte\KitSystem\form\FormTypes;
 use Jorgebyte\KitSystem\kit\Kit;
@@ -41,6 +42,6 @@ class DeleteKitCommand extends BaseSubCommand{
 			FormManager::sendForm($sender, FormTypes::DELETE_KIT_SUBFORM->value, [$sender, $kit->getName()]);
 			return;
 		}
-		FormManager::sendForm($sender, FormTypes::SELECT_KIT->value, [$sender, "deletekit"]);
+		FormManager::sendForm($sender, FormTypes::SELECT_KIT->value, [$sender, ActionType::DELETE_KIT]);
 	}
 }

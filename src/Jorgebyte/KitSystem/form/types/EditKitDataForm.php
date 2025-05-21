@@ -25,12 +25,19 @@ use Jorgebyte\KitSystem\util\SoundNames;
 use pocketmine\player\Player;
 use function is_numeric;
 
+/**
+ * Form to edit metadata of a kit (prefix, cooldown, price, permission, icon, chest mode).
+ */
 class EditKitDataForm extends CustomForm{
 	private Player $player;
 	private Translator $translator;
 	private \Closure $t;
 	protected string $kitName;
 
+	/**
+	 * @param Player $player  The player editing the kit
+	 * @param string $kitName The name of the kit to edit
+	 */
 	public function __construct(Player $player, string $kitName){
 		$this->player = $player;
 		$this->translator = Main::getInstance()->getTranslator();

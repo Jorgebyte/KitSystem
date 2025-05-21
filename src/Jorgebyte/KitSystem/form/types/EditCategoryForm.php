@@ -26,12 +26,20 @@ use Jorgebyte\KitSystem\util\SoundNames;
 use pocketmine\player\Player;
 use function array_filter;
 
+/**
+ * Custom form to edit an existing category, including its prefix, permission, icon,
+ * and associated kits (add or remove kits).
+ */
 class EditCategoryForm extends CustomForm{
 	private Player $player;
 	private Translator $translator;
 	private \Closure $t;
 	protected string $categoryName;
 
+	/**
+	 * @param Player $player       The player editing the category
+	 * @param string $categoryName The name of the category to edit
+	 */
 	public function __construct(Player $player, string $categoryName){
 		$this->player = $player;
 		$this->translator = Main::getInstance()->getTranslator();

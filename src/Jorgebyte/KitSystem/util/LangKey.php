@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace Jorgebyte\KitSystem\util;
 
+/*
+ * Enumeration representing LangKey types.
+ */
 enum LangKey : string{
 	// Errors
 	case ERROR_GENERIC = 'error.generic';

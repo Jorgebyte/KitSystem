@@ -15,8 +15,6 @@ namespace Jorgebyte\KitSystem;
 
 use CortexPE\Commando\exception\HookAlreadyRegistered;
 use CortexPE\Commando\PacketHooker;
-use DaPigGuy\libPiggyEconomy\exceptions\MissingProviderDependencyException;
-use DaPigGuy\libPiggyEconomy\exceptions\UnknownProviderException;
 use DaPigGuy\libPiggyEconomy\libPiggyEconomy;
 use DaPigGuy\libPiggyEconomy\providers\EconomyProvider;
 use Exception;
@@ -38,10 +36,18 @@ use function array_map;
 use function basename;
 use function glob;
 use function is_array;
+use function is_dir;
 use function parse_ini_file;
+use function pathinfo;
+use function scandir;
 use const DIRECTORY_SEPARATOR;
 use const INI_SCANNER_RAW;
+use const PATHINFO_EXTENSION;
 
+/**
+ * Main plugin class for KitSystem.
+ * Handles bootstrap of configuration, language, economy, managers, and events.
+ */
 final class Main extends PluginBase{
 	use SingletonTrait;
 
@@ -60,9 +66,8 @@ final class Main extends PluginBase{
 	}
 
 	/**
-	 * @throws UnknownProviderException
-	 * @throws HookAlreadyRegistered
-	 * @throws MissingProviderDependencyException
+	 * Plugin startup sequence.
+	 *
 	 * @throws Exception
 	 */
 	public function onEnable() : void{
@@ -76,6 +81,7 @@ final class Main extends PluginBase{
 	}
 
 	/**
+	 * Registers any required hooks like PacketHooker and InvMenu.
 	 * @throws HookAlreadyRegistered
 	 */
 	private function initializeHooks() : void{
@@ -87,6 +93,9 @@ final class Main extends PluginBase{
 		}
 	}
 
+	/**
+	 * Loads or generates the default config with fallback defaults.
+	 */
 	private function initializeConfig() : void{
 		$defaults = [
 			"default-language" => self::DEFAULT_LANGUAGE,
@@ -110,6 +119,9 @@ final class Main extends PluginBase{
 		$this->config = new Config($this->getDataFolder() . "config.yml", Config::YAML, $defaults);
 	}
 
+	/**
+	 * Initializes libasynql and runs schema setup.
+	 */
 	private function initializeDatabase() : void{
 		$this->database = libasynql::create(
 			$this,
@@ -126,8 +138,8 @@ final class Main extends PluginBase{
 	}
 
 	/**
-	 * @throws UnknownProviderException
-	 * @throws MissingProviderDependencyException
+	 * Initializes core plugin managers and economy provider.
+	 *
 	 * @throws Exception
 	 */
 	private function initializeManagers() : void{
@@ -147,6 +159,9 @@ final class Main extends PluginBase{
 		$this->economyProvider = libPiggyEconomy::getProvider($providerInfo);
 	}
 
+	/**
+	 * Registers plugin commands and event listeners.
+	 */
 	private function registerCommandsAndEvents() : void{
 		$this->getServer()->getCommandMap()->register("KitSystem", new KitSystemCommand($this));
 		$this->getServer()->getPluginManager()->registerEvents(new ClaimListener(), $this);
@@ -154,6 +169,8 @@ final class Main extends PluginBase{
 	}
 
 	/**
+	 * Loads all language translations from the /languages folder.
+	 *
 	 * @throws Exception
 	 */
 	private function loadTranslations() : void{
@@ -171,32 +188,36 @@ final class Main extends PluginBase{
 		);
 	}
 
-    public function saveResources() : void{
-        $this->saveResource("config.yml");
+	/**
+	 * Saves default plugin resources like config and language files.
+	 */
+	public function saveResources() : void{
+		$this->saveResource("config.yml");
 
-        $languageDir = $this->getFile() . "resources" . DIRECTORY_SEPARATOR . "languages";
-        if(!is_dir($languageDir)){
-            $this->getLogger()->warning("No language resource directory found");
-            return;
-        }
+		$languageDir = $this->getFile() . "resources" . DIRECTORY_SEPARATOR . "languages";
+		if(!is_dir($languageDir)){
+			$this->getLogger()->warning("No language resource directory found");
+			return;
+		}
 
-        $resourceLanguages = scandir($languageDir);
-        if($resourceLanguages === false){
-            $this->getLogger()->warning("Failed to read language resource directory");
-            return;
-        }
+		$resourceLanguages = scandir($languageDir);
+		if($resourceLanguages === false){
+			$this->getLogger()->warning("Failed to read language resource directory");
+			return;
+		}
 
-        foreach($resourceLanguages as $file){
-            if(pathinfo($file, PATHINFO_EXTENSION) !== "ini") continue;
+		foreach($resourceLanguages as $file){
+			if(pathinfo($file, PATHINFO_EXTENSION) !== "ini")continue;
 
-            $this->saveResource("languages/" . $file, true);
-        }
-    }
+			$this->saveResource("languages/" . $file, true);
+		}
+	}
 
-
-    public function onDisable() : void{
+	public function onDisable() : void{
 		if(isset($this->database))$this->database->close();
 	}
+
+	// Accessors
 
 	public function getKitManager() : KitManager{
 		return $this->kitManager;

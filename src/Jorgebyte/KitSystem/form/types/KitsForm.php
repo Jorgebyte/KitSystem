@@ -21,11 +21,16 @@ use Jorgebyte\KitSystem\form\FormTypes;
 use Jorgebyte\KitSystem\Main;
 use Jorgebyte\KitSystem\util\LangKey;
 use Jorgebyte\KitSystem\util\PlayerUtil;
-use Jorgebyte\KitSystem\util\TimeUtil;
 use Jorgebyte\KitSystem\util\ResolveIcon;
+use Jorgebyte\KitSystem\util\TimeUtil;
 use pocketmine\player\Player;
 use pocketmine\utils\TextFormat;
 use function array_filter;
+
+/**
+ * Displays all available kits and categories in a main UI.
+ * This form serves as the home menu for claiming kits.
+ */
 
 class KitsForm extends SimpleForm{
 	private Player $player;

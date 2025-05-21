@@ -36,7 +36,13 @@ use pocketmine\utils\TextFormat;
 use Throwable;
 use function is_subclass_of;
 
+/**
+ * Handles form instantiation and delivery to players using type-safe mappings.
+ * Forms are associated via the FormTypes enum and loaded dynamically.
+ */
 class FormManager{
+
+	/** @var array<string, class-string<Form>> Maps form types to their corresponding Form classes */
 	private static array $formMap = [
 		// [Kit] \\
 		FormTypes::CREATE_KIT->value => CreateKitForm::class,
@@ -56,19 +62,28 @@ class FormManager{
 		FormTypes::WHAT_TO_EDIT_SUBFORM->value => WhatToEditSubForm::class,
 	];
 
+	/**
+	 * Sends a form to the player with a sound effect.
+	 */
 	private static function sendFormWithSound(Player $player, Form $form) : void{
 		Sound::addSound($player, SoundNames::OPEN_FORM->value);
 		$player->sendForm($form);
 	}
 
+	/**
+	 * Dynamically resolves and sends a form based on its type and constructor arguments.
+	 *
+	 * @param string $formType One of the FormTypes enum values
+	 * @param array  $args     Arguments passed to the form constructor
+	 */
 	public static function sendForm(Player $player, string $formType, array $args = []) : void{
 		if(!isset(self::$formMap[$formType])){
-			throw new InvalidArgumentException("ERROR: Form type " . $formType . " is not recognized");
+			throw new InvalidArgumentException("ERROR: Form type '{$formType}' is not recognized.");
 		}
 
 		$formClass = self::$formMap[$formType];
 		if(!is_subclass_of($formClass, Form::class)){
-			throw new InvalidArgumentException("ERROR: The class " . $formClass . " is not a valid form type");
+			throw new InvalidArgumentException("ERROR: The class '{$formClass}' is not a valid Form subclass.");
 		}
 
 		try{

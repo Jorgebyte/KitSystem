@@ -16,24 +16,35 @@ namespace Jorgebyte\KitSystem\util;
 use Jorgebyte\KitSystem\kit\Kit;
 use pocketmine\player\Player;
 
-class PlayerUtil{
+/**
+ * Utility class for player-related logic.
+ */
+final class PlayerUtil{
+
+	/**
+	 * Determines whether the player has enough space in both inventory and armor slots
+	 * to receive the specified kit.
+	 *
+	 * @return bool True if the player has enough space, false otherwise
+	 */
 	public static function hasEnoughSpace(Player $player, Kit $kit) : bool{
 		$inventory = $player->getInventory();
 		$armorInventory = $player->getArmorInventory();
 
-		$items = $kit->getItems();
-		foreach($items as $item){
+		// Check main inventory space
+		foreach($kit->getItems() as $item){
 			if(!$inventory->canAddItem($item)){
 				return false;
 			}
 		}
 
-		$armor = $kit->getArmor();
-		foreach($armor as $i => $armorPiece){
-			if(!$armorInventory->getItem($i)->isNull()){
+		// Check if armor slots are empty
+		foreach($kit->getArmor() as $slot => $armorPiece){
+			if(!$armorInventory->getItem($slot)->isNull()){
 				return false;
 			}
 		}
+
 		return true;
 	}
 }

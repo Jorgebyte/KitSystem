@@ -17,13 +17,16 @@ use Jorgebyte\KitSystem\Main;
 use muqsit\invmenu\InvMenu;
 use muqsit\invmenu\InvMenuHandler;
 use muqsit\invmenu\transaction\InvMenuTransaction;
-use muqsit\invmenu\transaction\InvMenuTransactionResult;
 use muqsit\invmenu\type\InvMenuTypeIds;
 use pocketmine\block\utils\DyeColor;
 use pocketmine\block\VanillaBlocks;
 use function in_array;
 
-class PreviewKitMenu extends InvMenu{
+/**
+ * InvMenu that allows the player to preview the contents of a kit.
+ */
+final class PreviewKitMenu extends InvMenu{
+
 	protected string $kitName;
 
 	public function __construct(string $kitName){
@@ -32,39 +35,35 @@ class PreviewKitMenu extends InvMenu{
 		$this->setName("Previewing Kit: " . $kitName);
 
 		$kit = Main::getInstance()->getKitManager()->getKit($this->kitName);
-		if($kit === null){
-			return;
-		}
+		if($kit === null)return;
 
 		$inventory = $this->getInventory();
 		$redGlass = VanillaBlocks::STAINED_GLASS_PANE()->setColor(DyeColor::RED())->asItem()->setCustomName("");
 
+		// Fill kit items
 		foreach($kit->getItems() as $slot => $item){
 			$inventory->setItem($slot, $item);
 		}
 
-		for($i = 37; $i <= 40; $i++){
-			$inventory->setItem($i, $redGlass);
-		}
-
-		$armorItems = $kit->getArmor();
+		// Fill armor
 		$armorSlots = [47, 48, 49, 50];
-		foreach($armorItems as $i => $armorItem){
+		foreach($kit->getArmor() as $i => $armorItem){
 			if(isset($armorSlots[$i])){
 				$inventory->setItem($armorSlots[$i], $armorItem);
 			}
 		}
 
-		$inventory->setItem(40, $redGlass);
+		// Block confirm slot
+		$inventory->setItem(40, clone $redGlass);
 
+		// Fill borders
 		for($i = 36; $i < 54; $i++){
-			if(!in_array($i, [40, 47, 48, 49, 50], true) && $inventory->getItem($i)->isNull()){
-				$inventory->setItem($i, $redGlass);
+			if(!in_array($i, [40, ...$armorSlots], true) && $inventory->getItem($i)->isNull()){
+				$inventory->setItem($i, clone $redGlass);
 			}
 		}
 
-		$this->setListener(function (InvMenuTransaction $transaction) : InvMenuTransactionResult{
-			return $transaction->discard();
-		});
+		// Read-only
+		$this->setListener(fn(InvMenuTransaction $t) => $t->discard());
 	}
 }

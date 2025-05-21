@@ -23,6 +23,9 @@ use Jorgebyte\KitSystem\Main;
 use Jorgebyte\KitSystem\util\LangKey;
 use pocketmine\player\Player;
 
+/**
+ * Displays a list of all categories to allow the player to select one to delete.
+ */
 class DeleteCategoryForm extends SimpleForm{
 	private Player $player;
 	private Translator $translator;

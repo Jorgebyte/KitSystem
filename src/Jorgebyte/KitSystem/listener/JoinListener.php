@@ -21,6 +21,10 @@ use pocketmine\Server;
 use function file_exists;
 use function is_string;
 
+/**
+ * Listener for player join events.
+ * Automatically gives a starter kit if enabled and player is new.
+ */
 class JoinListener implements Listener{
 	public function onPlayerJoin(PlayerJoinEvent $event) : void{
 		$player = $event->getPlayer();

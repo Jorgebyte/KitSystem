@@ -19,16 +19,23 @@ use IvanCraft623\languages\Translator;
 use Jorgebyte\KitSystem\Main;
 use Jorgebyte\KitSystem\util\LangKey;
 use Jorgebyte\KitSystem\util\PlayerUtil;
-use Jorgebyte\KitSystem\util\TimeUtil;
 use Jorgebyte\KitSystem\util\ResolveIcon;
+use Jorgebyte\KitSystem\util\TimeUtil;
 use pocketmine\player\Player;
 
+/**
+ * Displays all kits under a specific category, and allows players to claim them.
+ */
 class CategoryForm extends SimpleForm{
 	private Player $player;
 	private string $categoryName;
 	private Translator $translator;
 	private \Closure $t;
 
+	/**
+	 * @param Player $player       The player viewing the category
+	 * @param string $categoryName The name of the category to show kits from
+	 */
 	public function __construct(Player $player, string $categoryName){
 		$this->player = $player;
 		$this->categoryName = $categoryName;

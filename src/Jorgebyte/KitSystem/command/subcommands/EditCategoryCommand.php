@@ -16,6 +16,7 @@ namespace Jorgebyte\KitSystem\command\subcommands;
 use CortexPE\Commando\BaseSubCommand;
 use CortexPE\Commando\constraint\InGameRequiredConstraint;
 use Jorgebyte\KitSystem\command\args\CategoryArgument;
+use Jorgebyte\KitSystem\form\ActionType;
 use Jorgebyte\KitSystem\form\FormManager;
 use Jorgebyte\KitSystem\form\FormTypes;
 use Jorgebyte\KitSystem\kit\category\Category;
@@ -41,6 +42,6 @@ class EditCategoryCommand extends BaseSubCommand{
 			FormManager::sendForm($sender, FormTypes::EDIT_CATEGORY_FORM->value, [$sender, $category->getName()]);
 			return;
 		}
-		FormManager::sendForm($sender, FormTypes::SELECT_CATEGORY->value, [$sender, "editcategory"]);
+		FormManager::sendForm($sender, FormTypes::SELECT_CATEGORY->value, [$sender, ActionType::EDIT_CATEGORY]);
 	}
 }

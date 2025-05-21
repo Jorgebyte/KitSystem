@@ -30,6 +30,10 @@ use Jorgebyte\KitSystem\Main;
 use pocketmine\command\CommandSender;
 use pocketmine\player\Player;
 
+/**
+ * Root command handler for KitSystem.
+ * Registers all subcommands and opens the main kit UI by default.
+ */
 class KitSystemCommand extends BaseCommand{
 	protected Main $plugin;
 
@@ -39,8 +43,12 @@ class KitSystemCommand extends BaseCommand{
 		$this->setPermission("kitsystem.command");
 	}
 
+	/**
+	 * Registers all available subcommands.
+	 */
 	protected function prepare() : void{
 		$this->addConstraint(new InGameRequiredConstraint($this));
+		// Kit commands
 		$this->registerSubCommand(new CreateKitCommand());
 		$this->registerSubCommand(new DeleteKitCommand());
 		$this->registerSubCommand(new EditKitCommand());
@@ -48,11 +56,15 @@ class KitSystemCommand extends BaseCommand{
 		$this->registerSubCommand(new GiveAllKitCommand());
 		$this->registerSubCommand(new PreviewKitCommand());
 
+		// Category commands
 		$this->registerSubCommand(new CreateCategoryCommand());
 		$this->registerSubCommand(new DeleteCategoryCommand());
 		$this->registerSubCommand(new EditCategoryCommand());
 	}
 
+	/**
+	 * Executes the command and opens the main kits form for the player.
+	 */
 	public function onRun(CommandSender $sender, string $aliasUsed, array $args) : void{
 		/** @var Player $sender */
 		FormManager::sendForm($sender, FormTypes::KITS->value, [$sender]);

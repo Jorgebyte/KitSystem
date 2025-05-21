@@ -16,6 +16,7 @@ namespace Jorgebyte\KitSystem\form\types;
 use EasyUI\element\Button;
 use EasyUI\variant\SimpleForm;
 use IvanCraft623\languages\Translator;
+use Jorgebyte\KitSystem\form\ActionType;
 use Jorgebyte\KitSystem\form\FormManager;
 use Jorgebyte\KitSystem\form\FormTypes;
 use Jorgebyte\KitSystem\Main;
@@ -25,19 +26,35 @@ use Jorgebyte\KitSystem\util\LangKey;
 use Jorgebyte\KitSystem\util\ResolveIcon;
 use pocketmine\player\Player;
 
+/**
+ * Dynamic form that displays all available kits and allows the player
+ * to perform a contextual action based on the selected kit.
+ *
+ * The behavior of the form is determined by the provided `ActionType` enum value.
+ *
+ * Supported actions:
+ * - ActionType::DELETE_KIT → Opens a confirmation form for deleting the selected kit.
+ * - ActionType::EDIT_KIT   → Navigates to a submenu to choose which kit properties to edit.
+ * - ActionType::PREVIEW_KIT → Displays the kit's contents in a preview inventory menu.
+ *
+ * @see ActionType for valid values.
+ */
 class SelectKitForm extends SimpleForm{
 	private Player $player;
 	private Translator $translator;
 	private \Closure $t;
-	protected string $args;
+	protected ActionType $args;
 
-	public function __construct(Player $player, string $args){
+	/**
+	 * @param Player     $player The player who is interacting with the form.
+	 * @param ActionType $args   The action to perform when a kit is selected.
+	 */
+	public function __construct(Player $player, ActionType $args){
 		$this->player = $player;
 		$this->translator = Main::getInstance()->getTranslator();
-		$this->t = function(string $key, array $r = []) : string{
-			return $this->translator->translate($this->player, $key, $r);
-		};
+		$this->t = fn(string $key, array $r = []) => $this->translator->translate($this->player, $key, $r);
 		$this->args = $args;
+
 		parent::__construct(
 			($this->t)(LangKey::TITLE_SELECT_KIT->value)
 		);
@@ -54,13 +71,13 @@ class SelectKitForm extends SimpleForm{
 			}
 			$button->setSubmitListener(function (Player $player) use ($t, $kit) : void{
 				switch($this->args){
-					case "deletekit":
+					case ActionType::DELETE_KIT:
 						FormManager::sendForm($player, FormTypes::DELETE_KIT_SUBFORM->value, [$player, $kit->getName()]);
 						break;
-					case "editkit":
+					case ActionType::EDIT_KIT:
 						FormManager::sendForm($player, FormTypes::WHAT_TO_EDIT_SUBFORM->value, [$player, $kit->getName()]);
 						break;
-					case "previewkit":
+					case ActionType::PREVIEW_KIT:
 						MenuManager::sendMenu($player, MenuTypes::PREVIEW_KIT->value, [$kit->getName()]);
 						break;
 				}

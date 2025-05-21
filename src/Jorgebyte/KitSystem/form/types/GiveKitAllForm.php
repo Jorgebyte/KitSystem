@@ -25,6 +25,10 @@ use Jorgebyte\KitSystem\util\PlayerUtil;
 use pocketmine\player\Player;
 use pocketmine\Server;
 
+/**
+ * Custom form to broadcast a kit to all online players.
+ * Supports chest delivery or direct inventory insertion.
+ */
 class GiveKitAllForm extends CustomForm{
 	private Player $player;
 	private Translator $translator;

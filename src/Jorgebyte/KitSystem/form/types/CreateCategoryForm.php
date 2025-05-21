@@ -24,6 +24,9 @@ use Jorgebyte\KitSystem\util\Sound;
 use Jorgebyte\KitSystem\util\SoundNames;
 use pocketmine\player\Player;
 
+/**
+ * Custom form that allows the creation of a new category.
+ */
 class CreateCategoryForm extends CustomForm{
 	private Player $player;
 	private Translator $translator;

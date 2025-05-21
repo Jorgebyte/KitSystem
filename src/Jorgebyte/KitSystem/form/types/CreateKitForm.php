@@ -28,6 +28,9 @@ use Jorgebyte\KitSystem\util\SoundNames;
 use pocketmine\player\Player;
 use function is_numeric;
 
+/**
+ * Custom form that allows players to create a new kit from their inventory and armor.
+ */
 class CreateKitForm extends CustomForm{
 	private Player $player;
 	private Translator $translator;

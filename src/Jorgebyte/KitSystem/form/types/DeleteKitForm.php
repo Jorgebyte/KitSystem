@@ -23,6 +23,9 @@ use Jorgebyte\KitSystem\Main;
 use Jorgebyte\KitSystem\util\LangKey;
 use pocketmine\player\Player;
 
+/**
+ * Displays all kits for deletion.
+ */
 class DeleteKitForm extends SimpleForm{
 	private Player $player;
 	private Translator $translator;

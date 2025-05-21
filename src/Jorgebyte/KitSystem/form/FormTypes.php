@@ -13,6 +13,10 @@ declare(strict_types=1);
 
 namespace Jorgebyte\KitSystem\form;
 
+/**
+ * Enum representing all the types of forms available in the plugin.
+ * Used for safely referencing form constructors via FormManager.
+ */
 enum FormTypes : string{
 	case CREATE_KIT = 'createkit';
 	case EDIT_KIT_DATA = 'editkitdata';
