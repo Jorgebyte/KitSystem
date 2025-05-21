@@ -66,10 +66,12 @@ class SelectKitForm extends SimpleForm{
 
 		foreach($kits as $kit){
 			$button = new Button($kit->getPrefix());
-			if($icon = ResolveIcon::resolveIcon($kit->getIcon())){
-				$button->setIcon($icon);
-			}
-			$button->setSubmitListener(function (Player $player) use ($t, $kit) : void{
+            $icon = ResolveIcon::resolveIcon($kit->getIcon());
+            if ($icon !== null) {
+                $button->setIcon($icon);
+            }
+
+            $button->setSubmitListener(function (Player $player) use ($kit) : void{
 				switch($this->args){
 					case ActionType::DELETE_KIT:
 						FormManager::sendForm($player, FormTypes::DELETE_KIT_SUBFORM->value, [$player, $kit->getName()]);

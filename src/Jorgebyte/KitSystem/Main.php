@@ -143,20 +143,18 @@ final class Main extends PluginBase{
 	 * @throws Exception
 	 */
 	private function initializeManagers() : void{
-		try{
-			$this->kitManager = new KitManager();
-		} catch(Exception $e){
-			$this->getLogger()->error($e->getMessage());
-		}
-		$this->categoryManager = new CategoryManager();
-		$this->cooldownManager = new CooldownManager();
+        $this->kitManager = new KitManager();
+        $this->categoryManager = new CategoryManager();
+        $this->cooldownManager = new CooldownManager();
 
-		libPiggyEconomy::init();
-		$providerInfo = $this->config->get("economy");
-		if(!is_array($providerInfo)){
-			throw new Exception("ERROR: Economy provider information must be an array in the configuration");
-		}
-		$this->economyProvider = libPiggyEconomy::getProvider($providerInfo);
+        libPiggyEconomy::init();
+
+        $providerInfo = $this->config->get("economy");
+        if (!is_array($providerInfo)) {
+            throw new \RuntimeException("Economy configuration must be an array.");
+        }
+
+        $this->economyProvider = libPiggyEconomy::getProvider($providerInfo);
 	}
 
 	/**
@@ -174,18 +172,32 @@ final class Main extends PluginBase{
 	 * @throws Exception
 	 */
 	private function loadTranslations() : void{
-		$this->translator = new Translator($this);
-		foreach(glob($this->getDataFolder() . "languages" . DIRECTORY_SEPARATOR . "*.ini") as $file){
-			$locale = basename($file, ".ini");
-			$content = parse_ini_file($file, false, INI_SCANNER_RAW);
-			if(!is_array($content)){
-				throw new Exception("Missing or inaccessible required resource files");
-			}
-			$this->translator->registerLanguage(new Language($locale, array_map('stripcslashes', $content)));
-		}
-		$this->translator->setDefaultLanguage(
-			$this->translator->getLanguage($this->config->get("default-language", self::DEFAULT_LANGUAGE))
-		);
+        $this->translator = new Translator($this);
+
+        $files = glob($this->getDataFolder() . "languages" . DIRECTORY_SEPARATOR . "*.ini");
+        if (!is_array($files)) {
+            throw new \RuntimeException("Failed to read language directory");
+        }
+
+        foreach ($files as $file) {
+            $locale = basename($file, ".ini");
+            $content = parse_ini_file($file, false, INI_SCANNER_RAW);
+
+            if (!is_array($content)) {
+                throw new \RuntimeException("Invalid language file: {$file}");
+            }
+
+            $this->translator->registerLanguage(new Language($locale, array_map('stripcslashes', $content)));
+        }
+
+        $defaultLocale = (string) $this->config->get("default-language", self::DEFAULT_LANGUAGE);
+        $defaultLang = $this->translator->getLanguage($defaultLocale);
+
+        if ($defaultLang !== null) {
+            $this->translator->setDefaultLanguage($defaultLang);
+        } else {
+            $this->getLogger()->warning("Default language '{$defaultLocale}' not found");
+        }
 	}
 
 	/**
@@ -200,13 +212,13 @@ final class Main extends PluginBase{
 			return;
 		}
 
-		$resourceLanguages = scandir($languageDir);
-		if($resourceLanguages === false){
-			$this->getLogger()->warning("Failed to read language resource directory");
-			return;
-		}
+        $resourceLanguages = scandir($languageDir);
+        if (!is_array($resourceLanguages)) {
+            $this->getLogger()->warning("Failed to read language resource directory");
+            return;
+        }
 
-		foreach($resourceLanguages as $file){
+        foreach($resourceLanguages as $file){
 			if(pathinfo($file, PATHINFO_EXTENSION) !== "ini")continue;
 
 			$this->saveResource("languages/" . $file, true);

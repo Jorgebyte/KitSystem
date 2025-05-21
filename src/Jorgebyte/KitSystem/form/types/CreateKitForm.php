@@ -101,9 +101,11 @@ class CreateKitForm extends CustomForm{
 		$prefix = $response->getInputSubmittedText("kitPrefix");
 		$cdInput = $response->getInputSubmittedText("cooldown");
 		$prInput = $response->getInputSubmittedText("price");
-		$perm = $response->getInputSubmittedText("permission") ?: null;
-		$icon = $response->getInputSubmittedText("icon")       ?: null;
-		$store = $response->getToggleSubmittedChoice("storeInChest");
+        $perm = trim($response->getInputSubmittedText("permission"));
+        $perm = $perm !== '' ? $perm : null;
+        $icon = trim($response->getInputSubmittedText("icon"));
+        $icon = $icon !== '' ? $icon : null;
+        $store = $response->getToggleSubmittedChoice("storeInChest");
 		$catSel = $response->getDropdownSubmittedOptionId("selectedCategory");
 		$cat = $catSel !== "None" ? $catSel : null;
 

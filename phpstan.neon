@@ -1,7 +1,7 @@
 parameters:
     level: max
     paths:
-        - src
+        - src/Jorgebyte/KitSystem
     checkMissingIterableValueType: false
     checkGenericClassInNonGenericObjectType: false
     treatPhpDocTypesAsCertain: false

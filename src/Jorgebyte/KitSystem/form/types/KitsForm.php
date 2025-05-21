@@ -59,10 +59,12 @@ class KitsForm extends SimpleForm{
 				TextFormat::GRAY .
 				$t(LangKey::BUTTON_LABEL_VIEW_KITS->value, ['%category%' => $cat->getName()]);
 			$button = new Button($label);
-			if($icon = ResolveIcon::resolveIcon($cat->getIcon())){
-				$button->setIcon($icon);
-			}
-			$button->setSubmitListener(function() use ($cat, $t) : void{
+            $icon = ResolveIcon::resolveIcon($cat->getIcon());
+            if ($icon !== null) {
+                $button->setIcon($icon);
+            }
+
+            $button->setSubmitListener(function() use ($cat, $t) : void{
 				if(!$cat->canUseCategory($this->player)){
 					$this->player->sendMessage($t(
 						LangKey::WITHOUT_PERMISSIONS->value
@@ -79,10 +81,11 @@ class KitsForm extends SimpleForm{
 		}
 
 		foreach($kits as $kit){
-			if(array_filter($categories, fn($c) => $c->hasKit($kit->getName()))){
-				continue;
-			}
-			if(!$kit->canUseKit($this->player)){
+            if (count(array_filter($categories, fn($c) => $c->hasKit($kit->getName()))) > 0) {
+                continue;
+            }
+
+            if(!$kit->canUseKit($this->player)){
 				continue;
 			}
 
@@ -103,11 +106,12 @@ class KitsForm extends SimpleForm{
 			}
 
 			$button = new Button($label);
-			if($icon = ResolveIcon::resolveIcon($kit->getIcon())){
-				$button->setIcon($icon);
-			}
+            $icon = ResolveIcon::resolveIcon($kit->getIcon());
+            if ($icon !== null) {
+                $button->setIcon($icon);
+            }
 
-			$button->setSubmitListener(function() use ($kit, $t, $economyProvider) : void{
+            $button->setSubmitListener(function() use ($kit, $t, $economyProvider) : void{
 				$kitName = $kit->getName();
 				$cd = Main::getInstance()->getCooldownManager()->getCooldown($this->player, $kitName);
 				if($cd !== null){

@@ -54,7 +54,7 @@ class JoinListener implements Listener{
 		$starterKit = $kitManager->getKit($starterKitName);
 		if($starterKit === null){
 			$player->sendMessage($translator->translate($player, LangKey::ERROR_KIT_INVALID->value,
-				["%kit%" => $starterKitName()]));
+				["%kit%" => $starterKitName]));
 			return;
 		}
 

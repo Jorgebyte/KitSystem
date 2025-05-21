@@ -73,10 +73,13 @@ class CreateCategoryForm extends CustomForm{
 
 		$name = $response->getInputSubmittedText("categoryName");
 		$prefix = $response->getInputSubmittedText("categoryPrefix");
-		$perm = $response->getInputSubmittedText("permission") ?: null;
-		$icon = $response->getInputSubmittedText("icon")       ?: null;
+        $perm = trim($response->getInputSubmittedText("permission"));
+        $perm = $perm !== '' ? $perm : null;
+        $icon = trim($response->getInputSubmittedText("icon"));
+        $icon = $icon !== '' ? $icon : null;
 
-		if($name === '' || $prefix === ''){
+
+        if($name === '' || $prefix === ''){
 			$player->sendMessage($t(LangKey::ERROR_CATEGORY_REQUIRED->value));
 			Sound::addSound($player, SoundNames::BAD_TONE->value);
 			return;

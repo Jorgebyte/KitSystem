@@ -65,10 +65,12 @@ class SelectCategoryForm extends SimpleForm{
 
 		foreach($categories as $cat){
 			$button = new Button($cat->getPrefix());
-			if($icon = ResolveIcon::resolveIcon($cat->getIcon())){
-				$button->setIcon($icon);
-			}
-			$button->setSubmitListener(function (Player $player) use ($t, $cat) : void{
+            $icon = ResolveIcon::resolveIcon($cat->getIcon());
+            if ($icon !== null) {
+                $button->setIcon($icon);
+            }
+
+			$button->setSubmitListener(function (Player $player) use ($cat) : void{
 				switch($this->args){
 					case ActionType::DELETE_CATEGORY:
 						FormManager::sendForm($player, FormTypes::DELETE_CATEGORY_SUBFORM->value, [$player, $cat->getName()]);
