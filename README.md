@@ -2,7 +2,7 @@
 ---
 
 # 🌟 KitSystem
-[![](https://poggit.pmmp.io/shield.state/KitSystem)](https://poggit.pmmp.io/p/KitSystem)
+[![](https://poggit.pmmp.io/shield.api/KitSystem)](https://poggit.pmmp.io/p/KitSystem)
 
 **KitSystem** is a powerful and user-friendly PocketMine-MP plugin that allows you to manage kits with ease using intuitive form-based interfaces.
 Inspired by the [EasyKits](https://github.com/AndreasHGK/EasyKits) plugin, but rebuilt from scratch with performance and scalability in mind.
