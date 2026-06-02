@@ -34,6 +34,6 @@ final class Sound{
 	 * Constructs a PlaySoundPacket for the specified parameters.
 	 */
 	private static function createPacket(Vector3 $vec, string $soundName, float $volume = 1.0, float $pitch = 1.0) : PlaySoundPacket{
-		return PlaySoundPacket::create($soundName, $vec->x, $vec->y, $vec->z, $volume, $pitch);
+		return PlaySoundPacket::create($soundName, $vec->x, $vec->y, $vec->z, $volume, $pitch, null);
 	}
 }

@@ -17,13 +17,18 @@ use CortexPE\Commando\BaseSubCommand;
 use CortexPE\Commando\constraint\InGameRequiredConstraint;
 use Jorgebyte\KitSystem\form\FormManager;
 use Jorgebyte\KitSystem\form\FormTypes;
+use Jorgebyte\KitSystem\util\Permission;
 use pocketmine\command\CommandSender;
 use pocketmine\player\Player;
 
 class GiveAllKitCommand extends BaseSubCommand{
 	public function __construct(){
 		parent::__construct("giveall", "KitSystem - Give a kit to all online users");
-		$this->setPermission("kitsystem.command.giveall");
+		$this->setPermission(Permission::GIVE_ALL_KIT->value);
+	}
+
+	public function getPermission() : string{
+		return Permission::GIVE_ALL_KIT->value;
 	}
 
 	protected function prepare() : void{

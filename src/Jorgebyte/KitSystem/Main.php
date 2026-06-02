@@ -145,7 +145,7 @@ final class Main extends PluginBase{
 	private function initializeManagers() : void{
 		$this->kitManager = new KitManager();
 		$this->categoryManager = new CategoryManager();
-		$this->cooldownManager = new CooldownManager();
+		$this->cooldownManager = new CooldownManager($this);
 
 		libPiggyEconomy::init();
 

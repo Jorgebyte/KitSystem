@@ -17,13 +17,18 @@ use CortexPE\Commando\BaseSubCommand;
 use CortexPE\Commando\constraint\InGameRequiredConstraint;
 use Jorgebyte\KitSystem\form\FormManager;
 use Jorgebyte\KitSystem\form\FormTypes;
+use Jorgebyte\KitSystem\util\Permission;
 use pocketmine\command\CommandSender;
 use pocketmine\player\Player;
 
 class CreateCategoryCommand extends BaseSubCommand{
 	public function __construct(){
 		parent::__construct("createcategory", "KitSystem - Create a new category");
-		$this->setPermission("kitsystem.command.createcategory");
+		$this->setPermission(Permission::CREATE_CATEGORY->value);
+	}
+
+	public function getPermission() : string{
+		return Permission::CREATE_CATEGORY->value;
 	}
 
 	protected function prepare() : void{

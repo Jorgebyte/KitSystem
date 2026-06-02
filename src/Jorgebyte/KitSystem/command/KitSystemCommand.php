@@ -27,6 +27,7 @@ use Jorgebyte\KitSystem\command\subcommands\PreviewKitCommand;
 use Jorgebyte\KitSystem\form\FormManager;
 use Jorgebyte\KitSystem\form\FormTypes;
 use Jorgebyte\KitSystem\Main;
+use Jorgebyte\KitSystem\util\Permission;
 use pocketmine\command\CommandSender;
 use pocketmine\player\Player;
 
@@ -40,7 +41,11 @@ class KitSystemCommand extends BaseCommand{
 	public function __construct(Main $plugin){
 		$this->plugin = $plugin;
 		parent::__construct($this->plugin, "kitsystem", "KitSystem Command", ["kit", "ekit"]);
-		$this->setPermission("kitsystem.command");
+		$this->setPermission(Permission::COMMAND->value);
+	}
+
+	public function getPermission() : string{
+		return Permission::COMMAND->value;
 	}
 
 	/**

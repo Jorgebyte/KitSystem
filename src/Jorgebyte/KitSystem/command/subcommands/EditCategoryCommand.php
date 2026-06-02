@@ -15,20 +15,29 @@ namespace Jorgebyte\KitSystem\command\subcommands;
 
 use CortexPE\Commando\BaseSubCommand;
 use CortexPE\Commando\constraint\InGameRequiredConstraint;
+use CortexPE\Commando\exception\ArgumentOrderException;
 use Jorgebyte\KitSystem\command\args\CategoryArgument;
 use Jorgebyte\KitSystem\form\ActionType;
 use Jorgebyte\KitSystem\form\FormManager;
 use Jorgebyte\KitSystem\form\FormTypes;
 use Jorgebyte\KitSystem\kit\category\Category;
+use Jorgebyte\KitSystem\util\Permission;
 use pocketmine\command\CommandSender;
 use pocketmine\player\Player;
 
 class EditCategoryCommand extends BaseSubCommand{
 	public function __construct(){
 		parent::__construct("editcategory", "KitSystem - Edit a category");
-		$this->setPermission("kitsystem.command.editcategory");
+		$this->setPermission(Permission::EDIT_CATEGORY->value);
 	}
 
+	public function getPermission() : string{
+		return Permission::EDIT_CATEGORY->value;
+	}
+
+	/**
+	 * @throws ArgumentOrderException
+	 */
 	protected function prepare() : void{
 		$this->registerArgument(0, new CategoryArgument("category", true));
 		$this->addConstraint(new InGameRequiredConstraint($this));

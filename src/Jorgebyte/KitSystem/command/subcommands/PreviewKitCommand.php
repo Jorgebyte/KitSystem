@@ -18,13 +18,18 @@ use CortexPE\Commando\constraint\InGameRequiredConstraint;
 use Jorgebyte\KitSystem\form\ActionType;
 use Jorgebyte\KitSystem\form\FormManager;
 use Jorgebyte\KitSystem\form\FormTypes;
+use Jorgebyte\KitSystem\util\Permission;
 use pocketmine\command\CommandSender;
 use pocketmine\player\Player;
 
 class PreviewKitCommand extends BaseSubCommand{
 	public function __construct(){
 		parent::__construct("preview", "KitSystem - View the contents of the kit");
-		$this->setPermission("kitsystem.command.previewkit");
+		$this->setPermission(Permission::PREVIEW_KIT->value);
+	}
+
+	public function getPermission() : string{
+		return Permission::PREVIEW_KIT->value;
 	}
 
 	protected function prepare() : void{

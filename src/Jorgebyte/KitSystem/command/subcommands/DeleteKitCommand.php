@@ -15,20 +15,29 @@ namespace Jorgebyte\KitSystem\command\subcommands;
 
 use CortexPE\Commando\BaseSubCommand;
 use CortexPE\Commando\constraint\InGameRequiredConstraint;
+use CortexPE\Commando\exception\ArgumentOrderException;
 use Jorgebyte\KitSystem\command\args\KitArgument;
 use Jorgebyte\KitSystem\form\ActionType;
 use Jorgebyte\KitSystem\form\FormManager;
 use Jorgebyte\KitSystem\form\FormTypes;
 use Jorgebyte\KitSystem\kit\Kit;
+use Jorgebyte\KitSystem\util\Permission;
 use pocketmine\command\CommandSender;
 use pocketmine\player\Player;
 
 class DeleteKitCommand extends BaseSubCommand{
 	public function __construct(){
 		parent::__construct("delete", "KitSystem - delete a kit");
-		$this->setPermission("kitsystem.command.delete");
+		$this->setPermission(Permission::DELETE_KIT->value);
 	}
 
+	public function getPermission() : string{
+		return Permission::DELETE_KIT->value;
+	}
+
+	/**
+	 * @throws ArgumentOrderException
+	 */
 	protected function prepare() : void{
 		$this->registerArgument(0, new KitArgument("kit", true));
 		$this->addConstraint(new InGameRequiredConstraint($this));

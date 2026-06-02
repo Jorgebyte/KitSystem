@@ -17,13 +17,18 @@ use CortexPE\Commando\BaseSubCommand;
 use CortexPE\Commando\constraint\InGameRequiredConstraint;
 use Jorgebyte\KitSystem\form\FormManager;
 use Jorgebyte\KitSystem\form\FormTypes;
+use Jorgebyte\KitSystem\util\Permission;
 use pocketmine\command\CommandSender;
 use pocketmine\player\Player;
 
 class CreateKitCommand extends BaseSubCommand{
 	public function __construct(){
 		parent::__construct("create", "KitSystem - Create a kit");
-		$this->setPermission("kitsystem.command.create");
+		$this->setPermission(Permission::CREATE_KIT->value);
+	}
+
+	public function getPermission() : string{
+		return Permission::CREATE_KIT->value;
 	}
 
 	protected function prepare() : void{
